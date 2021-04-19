@@ -2,25 +2,25 @@ import functools
 import logging
 import urllib
 from contextlib import contextmanager
-from urlparse import urlsplit
+from enum import Enum
 
 import boto3
 import botocore
 from botocore.config import Config
-from botocore.exceptions import (
-    BotoCoreError,
-    ClientError,
-)
-from enum import Enum
+from botocore.exceptions import BotoCoreError, ClientError
 from flask_babel import lazy_gettext as _
-
 from mirror import MirrorUploader
 from model import ExternalIntegration
-from model.configuration import ConfigurationOption, ConfigurationGrouping, ConfigurationMetadata, \
-    ConfigurationAttributeType
+from model.configuration import (
+    ConfigurationAttributeType,
+    ConfigurationGrouping,
+    ConfigurationMetadata,
+    ConfigurationOption,
+)
+from urlparse import urlsplit
 
 
-class MultipartS3Upload():
+class MultipartS3Upload:
     def __init__(self, uploader, representation, mirror_to):
         self.uploader = uploader
         self.representation = representation
@@ -79,7 +79,7 @@ def _get_available_regions():
     """
     session = boto3.session.Session()
 
-    return session.get_available_regions(service_name='s3')
+    return session.get_available_regions(service_name="s3")
 
 
 def _get_available_region_options():
@@ -116,6 +116,7 @@ class S3UploaderConfiguration(ConfigurationGrouping):
     OA_CONTENT_BUCKET_KEY = u'open_access_content_bucket'
     PROTECTED_CONTENT_BUCKET_KEY = u'protected_content_bucket'
     MARC_BUCKET_KEY = u'marc_bucket'
+    ANALYTICS_BUCKET_KEY = u'analytics_bucket'
 
     URL_TEMPLATE_KEY = u'bucket_name_transform'
     URL_TEMPLATE_HTTP = u'http'
@@ -193,6 +194,18 @@ class S3UploaderConfiguration(ConfigurationGrouping):
         ),
         type=ConfigurationAttributeType.TEXT,
         required=False
+    )
+
+    analytics_bucket = ConfigurationMetadata(
+        key=ANALYTICS_BUCKET_KEY,
+        label=_("Analytics Bucket"),
+        description=_(
+            "The bucket used to store analytics data. "
+            "Please note that you can specify a folder too. For example: <bucket>/folder. "
+            "<p>The bucket must already exist&mdash;it will not be created automatically.</p>"
+        ),
+        type=ConfigurationAttributeType.TEXT,
+        required=False,
     )
 
     s3_region = ConfigurationMetadata(
@@ -535,6 +548,52 @@ class S3Uploader(MirrorUploader):
             time_part = str(end_time)
         parts = [time_part, lane.display_name]
         return root + self.key_join(parts) + ".mrc"
+
+    def analytics_file_url(self, library, license_pool, event_type, time):
+        """Generate an S3 URL for the file containing information about the analytics event.
+
+        NOTE: The current implementation stores analytics file in a flat structure
+        because hierarchical structure requires setting up partitioning in AWS Glue and increases overall complexity.
+
+        :param library: Library associated with the event
+        :type library: core.model.library.Library
+
+        :param license_pool: License pool associated with the event
+        :type license_pool: core.model.licensing.LicensePool
+
+        :param event_type: Type of the event
+        :type event_type: str
+
+        :param time: Event's timestamp
+        :type time: datetime.datetime
+
+        :return: S3 URL for the file containing information about the analytics event
+        :rtype: str
+        """
+        bucket = self.get_bucket(S3UploaderConfiguration.ANALYTICS_BUCKET_KEY)
+        folder = ""
+
+        if "/" in bucket:
+            parts = bucket.split("/")
+            bucket = parts[0]
+            folder = "/".join(parts[1:])
+
+        root = self.content_root(bucket)
+        parts = []
+
+        if folder:
+            parts.append(folder)
+
+        file_name = "{0}_{1}".format(library.short_name, event_type)
+
+        if license_pool:
+            file_name += "_{0}".format(license_pool.id)
+
+        file_name += "_{0}.json".format(str(time))
+
+        parts.append(file_name)
+
+        return root + self.key_join(parts)
 
     def split_url(self, url, unquote=True):
         """Splits the URL into the components: bucket and file path

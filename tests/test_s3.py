@@ -2,36 +2,35 @@
 import datetime
 import functools
 import os
-from urlparse import urlsplit
 
 import boto3
 import botocore
 import pytest
-from botocore.exceptions import (
-    BotoCoreError,
-    ClientError,
-)
+from botocore.exceptions import BotoCoreError, ClientError
 from mock import MagicMock
-import pytest
 from parameterized import parameterized
+from urlparse import urlsplit
 
-from ..testing import (
-    DatabaseTest
-)
 from ..mirror import MirrorUploader
 from ..model import (
-    Identifier,
+    CirculationEvent,
     DataSource,
     ExternalIntegration,
     Hyperlink,
+    Identifier,
     Representation,
     create,
 )
 from ..s3 import (
-    S3Uploader,
+    MinIOUploader,
+    MinIOUploaderConfiguration,
     MockS3Client,
     MultipartS3Upload,
-    S3AddressingStyle, MinIOUploader, S3UploaderConfiguration, MinIOUploaderConfiguration)
+    S3AddressingStyle,
+    S3Uploader,
+    S3UploaderConfiguration,
+)
+from ..testing import DatabaseTest
 
 
 class S3UploaderTest(DatabaseTest):
@@ -833,6 +832,94 @@ class TestS3Uploader(S3UploaderTest):
 
         # Act
         result = uploader.marc_file_url(library, lane, end_time, start_time)
+
+        # Assert
+        assert result == expected_result
+
+    @parameterized.expand([
+        (
+            'with_s3_bucket_without_folder_and_licensepool',
+            'TEST_LIBRARY',
+            None,
+            CirculationEvent.NEW_PATRON,
+            datetime.datetime(2020, 1, 1, 0, 0, 0),
+            'analytics',
+            'https://analytics.s3.amazonaws.com/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00.json'.format(
+                CirculationEvent.NEW_PATRON
+            )
+        ),
+        (
+            'with_s3_bucket_with_folder_without_licensepool',
+            'TEST_LIBRARY',
+            None,
+            CirculationEvent.NEW_PATRON,
+            datetime.datetime(2020, 1, 1, 0, 0, 0),
+            'analytics/folder',
+            'https://analytics.s3.amazonaws.com/folder/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00.json'.format(
+                CirculationEvent.NEW_PATRON
+            )
+        ),
+        (
+            'with_s3_bucket_with_nested_folders_without_licensepool',
+            'TEST_LIBRARY',
+            None,
+            CirculationEvent.NEW_PATRON,
+            datetime.datetime(2020, 1, 1, 0, 0, 0),
+            'analytics/folder/nested-folder',
+            'https://analytics.s3.amazonaws.com/folder/nested-folder/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00.json'.format(
+                CirculationEvent.NEW_PATRON
+            )
+        ),
+        (
+            'with_s3_bucket_without_folder_with_licensepool',
+            'TEST_LIBRARY',
+            1,
+            CirculationEvent.NEW_PATRON,
+            datetime.datetime(2020, 1, 1, 0, 0, 0),
+            'analytics',
+            'https://analytics.s3.amazonaws.com/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00.json'.format(
+                CirculationEvent.NEW_PATRON
+            )
+        ),
+        (
+            'with_s3_bucket_with_folder_and_licensepool',
+            'TEST_LIBRARY',
+            1,
+            CirculationEvent.NEW_PATRON,
+            datetime.datetime(2020, 1, 1, 0, 0, 0),
+            'analytics/folder',
+            'https://analytics.s3.amazonaws.com/folder/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00.json'.format(
+                CirculationEvent.NEW_PATRON
+            )
+        ),
+        (
+            'with_s3_bucket_with_nested_folders_and_licensepool',
+            'TEST_LIBRARY',
+            1,
+            CirculationEvent.NEW_PATRON,
+            datetime.datetime(2020, 1, 1, 0, 0, 0),
+            'analytics/folder/nested-folder',
+            'https://analytics.s3.amazonaws.com/folder/nested-folder/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00.json'.format(
+                CirculationEvent.NEW_PATRON
+            )
+        ),
+    ])
+    def test_analytics_file_url(self, _, library_name, license_pool_id, event_type, time, bucket, expected_result):
+        # Arrange
+        library = self._library(short_name=library_name)
+
+        license_pool = None
+
+        if license_pool_id:
+            edition = self._edition('Test Data Source')
+            license_pool = self._licensepool(edition)
+            license_pool.id = license_pool_id
+
+        buckets = {S3UploaderConfiguration.ANALYTICS_BUCKET_KEY: bucket}
+        uploader = self._create_s3_uploader(**buckets)
+
+        # Act
+        result = uploader.analytics_file_url(library, license_pool, event_type, time)
 
         # Assert
         assert result == expected_result

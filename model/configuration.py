@@ -41,6 +41,7 @@ class ExternalIntegrationLink(Base, HasFullTableCache):
     PROTECTED_ACCESS_BOOKS_KEY = '{0}_integration_id'.format(PROTECTED_ACCESS_BOOKS)
 
     MARC = "MARC_mirror"
+    ANALYTICS = "Analytics_mirror"
 
     id = Column(Integer, primary_key=True)
     external_integration_id = Column(

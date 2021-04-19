@@ -239,6 +239,7 @@ class MediaTypes(object):
     AUDIOBOOK_MANIFEST_MEDIA_TYPE = u"application/audiobook+json"
     AUDIOBOOK_PACKAGE_MEDIA_TYPE = u"application/audiobook+zip"
     MARC_MEDIA_TYPE = u"application/marc"
+    JSON_MEDIA_TYPE = u"application/json"
 
     # To distinguish internally between Overdrive's audiobook and
     # (hopefully future) ebook manifests, we invent values for the
