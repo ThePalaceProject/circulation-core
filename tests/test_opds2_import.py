@@ -103,17 +103,17 @@ class TestOPDS2Importer(OPDSTest):
         )
         assert isinstance(moby_dick_edition, Edition)
 
-        assert u"Moby-Dick" == moby_dick_edition.title
-        assert u"eng" == moby_dick_edition.language
-        assert u"eng" == moby_dick_edition.language
+        assert "Moby-Dick" == moby_dick_edition.title
+        assert "eng" == moby_dick_edition.language
+        assert "eng" == moby_dick_edition.language
         assert EditionConstants.BOOK_MEDIUM == moby_dick_edition.medium
-        assert u"Herman Melville" == moby_dick_edition.author
+        assert "Herman Melville" == moby_dick_edition.author
 
         assert 1 == len(moby_dick_edition.author_contributors)
         [moby_dick_author] = moby_dick_edition.author_contributors
         assert isinstance(moby_dick_author, Contributor)
-        assert u"Herman Melville" == moby_dick_author.display_name
-        assert u"Melville, Herman" == moby_dick_author.sort_name
+        assert "Herman Melville" == moby_dick_author.display_name
+        assert "Melville, Herman" == moby_dick_author.sort_name
 
         assert 1 == len(moby_dick_author.contributions)
         [moby_dick_author_contribution] = moby_dick_author.contributions
@@ -124,12 +124,12 @@ class TestOPDS2Importer(OPDSTest):
 
         assert data_source == moby_dick_edition.data_source
 
-        assert u"Test Publisher" == moby_dick_edition.publisher
+        assert "Test Publisher" == moby_dick_edition.publisher
         assert datetime.date(2015, 9, 29) == moby_dick_edition.published
 
-        assert u"http://example.org/cover.jpg" == moby_dick_edition.cover_full_url
+        assert "http://example.org/cover.jpg" == moby_dick_edition.cover_full_url
         assert (
-            u"http://example.org/cover-small.jpg"
+            "http://example.org/cover-small.jpg"
             == moby_dick_edition.cover_thumbnail_url
         )
 
@@ -139,19 +139,17 @@ class TestOPDS2Importer(OPDSTest):
         )
         assert isinstance(huckleberry_finn_edition, Edition)
 
-        assert u"Adventures of Huckleberry Finn" == huckleberry_finn_edition.title
-        assert u"eng" == huckleberry_finn_edition.language
+        assert "Adventures of Huckleberry Finn" == huckleberry_finn_edition.title
+        assert "eng" == huckleberry_finn_edition.language
         assert EditionConstants.BOOK_MEDIUM == huckleberry_finn_edition.medium
-        assert (
-            u"Samuel Langhorne Clemens, Mark Twain" == huckleberry_finn_edition.author
-        )
+        assert "Samuel Langhorne Clemens, Mark Twain" == huckleberry_finn_edition.author
 
         assert 2 == len(huckleberry_finn_edition.author_contributors)
         huckleberry_finn_authors = huckleberry_finn_edition.author_contributors
 
         assert isinstance(huckleberry_finn_authors[0], Contributor)
-        assert u"Mark Twain" == huckleberry_finn_authors[0].display_name
-        assert u"Twain, Mark" == huckleberry_finn_authors[0].sort_name
+        assert "Mark Twain" == huckleberry_finn_authors[0].display_name
+        assert "Twain, Mark" == huckleberry_finn_authors[0].sort_name
 
         assert 1 == len(huckleberry_finn_authors[0].contributions)
         [huckleberry_finn_author_contribution] = huckleberry_finn_authors[
@@ -166,8 +164,8 @@ class TestOPDS2Importer(OPDSTest):
         assert Contributor.AUTHOR_ROLE == huckleberry_finn_author_contribution.role
 
         assert isinstance(huckleberry_finn_authors[1], Contributor)
-        assert u"Samuel Langhorne Clemens" == huckleberry_finn_authors[1].display_name
-        assert u"Clemens, Samuel Langhorne" == huckleberry_finn_authors[1].sort_name
+        assert "Samuel Langhorne Clemens" == huckleberry_finn_authors[1].display_name
+        assert "Clemens, Samuel Langhorne" == huckleberry_finn_authors[1].sort_name
 
         assert 1 == len(huckleberry_finn_authors[1].contributions)
         [huckleberry_finn_author_contribution] = huckleberry_finn_authors[
@@ -183,12 +181,10 @@ class TestOPDS2Importer(OPDSTest):
 
         assert data_source == huckleberry_finn_edition.data_source
 
-        assert u"Test Publisher" == huckleberry_finn_edition.publisher
+        assert "Test Publisher" == huckleberry_finn_edition.publisher
         assert datetime.date(2014, 9, 28) == huckleberry_finn_edition.published
 
-        assert (
-            u"http://example.org/cover.jpg" == huckleberry_finn_edition.cover_full_url
-        )
+        assert "http://example.org/cover.jpg" == moby_dick_edition.cover_full_url
 
         # 2. Make sure that license pools have correct configuration
         assert isinstance(pools, list)
@@ -273,7 +269,7 @@ class TestOPDS2Importer(OPDSTest):
         assert 1 == len(huckleberry_finn_work.license_pools)
         assert huckleberry_finn_license_pool == huckleberry_finn_work.license_pools[0]
         assert (
-            u"Adventures of Huckleberry Finn is a novel by Mark Twain, first published in the United Kingdom in "
-            u"December 1884 and in the United States in February 1885."
+            "Adventures of Huckleberry Finn is a novel by Mark Twain, first published in the United Kingdom in "
+            "December 1884 and in the United States in February 1885."
             == huckleberry_finn_work.summary_text
         )
