@@ -9,7 +9,6 @@ import pytest
 from botocore.exceptions import BotoCoreError, ClientError
 from mock import MagicMock
 from parameterized import parameterized
-from urlparse import urlsplit
 
 from ..mirror import MirrorUploader
 from ..model import (
