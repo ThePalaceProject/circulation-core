@@ -1,5 +1,5 @@
 from flask_babel import lazy_gettext as _
-from model import CirculationEvent, ExternalIntegration, Session, create, get_one
+from .model import CirculationEvent, ExternalIntegration, Session, create, get_one
 
 from .model.configuration import (
     ConfigurationAttributeType,
