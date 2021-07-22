@@ -843,7 +843,7 @@ class TestS3Uploader(S3UploaderTest):
             CirculationEvent.NEW_PATRON,
             datetime_utc(2020, 1, 1, 0, 0, 0),
             'analytics',
-            'https://analytics.s3.amazonaws.com/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00.json'.format(
+            'https://analytics.s3.amazonaws.com/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00%2B00%3A00.json'.format(
                 CirculationEvent.NEW_PATRON
             )
         ),
@@ -854,7 +854,7 @@ class TestS3Uploader(S3UploaderTest):
             CirculationEvent.NEW_PATRON,
             datetime_utc(2020, 1, 1, 0, 0, 0),
             'analytics/folder',
-            'https://analytics.s3.amazonaws.com/folder/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00.json'.format(
+            'https://analytics.s3.amazonaws.com/folder/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00%2B00%3A00.json'.format(
                 CirculationEvent.NEW_PATRON
             )
         ),
@@ -865,7 +865,7 @@ class TestS3Uploader(S3UploaderTest):
             CirculationEvent.NEW_PATRON,
             datetime_utc(2020, 1, 1, 0, 0, 0),
             'analytics/folder/nested-folder',
-            'https://analytics.s3.amazonaws.com/folder/nested-folder/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00.json'.format(
+            'https://analytics.s3.amazonaws.com/folder/nested-folder/TEST_LIBRARY_{0}_2020-01-01%2000%3A00%3A00%2B00%3A00.json'.format(
                 CirculationEvent.NEW_PATRON
             )
         ),
@@ -876,7 +876,7 @@ class TestS3Uploader(S3UploaderTest):
             CirculationEvent.NEW_PATRON,
             datetime_utc(2020, 1, 1, 0, 0, 0),
             'analytics',
-            'https://analytics.s3.amazonaws.com/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00.json'.format(
+            'https://analytics.s3.amazonaws.com/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00%2B00%3A00.json'.format(
                 CirculationEvent.NEW_PATRON
             )
         ),
@@ -887,7 +887,7 @@ class TestS3Uploader(S3UploaderTest):
             CirculationEvent.NEW_PATRON,
             datetime_utc(2020, 1, 1, 0, 0, 0),
             'analytics/folder',
-            'https://analytics.s3.amazonaws.com/folder/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00.json'.format(
+            'https://analytics.s3.amazonaws.com/folder/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00%2B00%3A00.json'.format(
                 CirculationEvent.NEW_PATRON
             )
         ),
@@ -898,7 +898,7 @@ class TestS3Uploader(S3UploaderTest):
             CirculationEvent.NEW_PATRON,
             datetime_utc(2020, 1, 1, 0, 0, 0),
             'analytics/folder/nested-folder',
-            'https://analytics.s3.amazonaws.com/folder/nested-folder/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00.json'.format(
+            'https://analytics.s3.amazonaws.com/folder/nested-folder/TEST_LIBRARY_{0}_1_2020-01-01%2000%3A00%3A00%2B00%3A00.json'.format(
                 CirculationEvent.NEW_PATRON
             )
         ),
