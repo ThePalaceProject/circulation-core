@@ -537,6 +537,18 @@ class ExternalIntegration(Base, HasFullTableCache):
                 lines.append(explanation)
         return lines
 
+    def delete(self):
+        """Remove an external integration."""
+        _db = Session.object_session(self)
+        qu = _db.query(
+            ExternalIntegrationLink
+        ).filter(
+            ExternalIntegrationLink.external_integration_id == self.id
+        )
+        qu.delete()
+
+        _db.delete(self)
+
 
 class ConfigurationSetting(Base, HasFullTableCache):
     """An extra piece of site configuration.

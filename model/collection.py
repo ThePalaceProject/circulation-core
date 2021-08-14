@@ -860,7 +860,7 @@ class Collection(Base, HasFullTableCache):
         # Delete the ExternalIntegration associated with this
         # Collection, assuming it wasn't deleted already.
         if self.external_integration:
-            _db.delete(self.external_integration)
+            self.external_integration.delete()
 
         # Now delete the Collection itself.
         _db.delete(self)
