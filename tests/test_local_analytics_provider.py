@@ -1,12 +1,13 @@
+import datetime
+
 import pytest
 
-from ..testing import DatabaseTest
-from ..local_analytics_provider import LocalAnalyticsProvider
-from ..model import (
-    CirculationEvent,
-    ExternalIntegration,
-    create,
+from ..local_analytics_provider import (
+    LocalAnalyticsProvider,
+    LocalAnalyticsProviderConfiguration,
 )
+from ..model import CirculationEvent, ExternalIntegration, create
+from ..testing import DatabaseTest
 from ..util.datetime_helpers import to_utc, utc_now
 
 class TestLocalAnalyticsProvider(DatabaseTest):
@@ -98,8 +99,8 @@ class TestLocalAnalyticsProvider(DatabaseTest):
         # neighborhood as the event location.
 
         p = LocalAnalyticsProvider
-        self.integration.setting(p.LOCATION_SOURCE).value = (
-            p.LOCATION_SOURCE_NEIGHBORHOOD
+        self.integration.setting(LocalAnalyticsProviderConfiguration.LOCATION_SOURCE).value = (
+            LocalAnalyticsProviderConfiguration.LOCATION_SOURCE_NEIGHBORHOOD
         )
         la = p(self.integration, self._default_library)
 
