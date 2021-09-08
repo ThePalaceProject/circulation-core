@@ -1,9 +1,10 @@
 import logging
+from io import BytesIO, StringIO
+from typing import Dict, List
+from urllib.parse import urljoin, urlparse
 
 import webpub_manifest_parser.opds2.ast as opds2_ast
 from flask_babel import lazy_gettext as _
-from io import StringIO, BytesIO
-from urllib.parse import urljoin, urlparse
 from webpub_manifest_parser.core import ManifestParserFactory, ManifestParserResult
 from webpub_manifest_parser.core.analyzer import NodeFinder
 from webpub_manifest_parser.core.ast import Manifestlike
@@ -176,6 +177,21 @@ class OPDS2Importer(OPDSImporter):
 
         self._parser = parser
         self._logger = logging.getLogger(__name__)
+
+    def _is_identifier_allowed(self, identifier: Identifier) -> bool:
+        """Check the identifier and return a boolean value indicating whether CM can import it.
+
+        NOTE: Currently, this method hard codes allowed identifier types.
+        The next PR will add an additional configuration setting allowing to override this behaviour
+        and configure allowed identifier types in the CM Admin UI.
+
+        :param identifier: Identifier object
+        :type identifier: Identifier
+
+        :return: Boolean value indicating whether CM can import the identifier
+        :rtype: bool
+        """
+        return identifier.type == Identifier.ISBN
 
     def _extract_subjects(self, subjects):
         """Extract a list of SubjectData objects from the webpub-manifest-parser's subject.
@@ -809,6 +825,58 @@ class OPDS2Importer(OPDSImporter):
 
         return open_access_rights_link
 
+    def _record_coverage_failure(
+        self,
+        failures: Dict[str, List[CoverageFailure]],
+        identifier: Identifier,
+        error_message: str,
+        transient: bool = True,
+    ) -> CoverageFailure:
+        """Record a new coverage failure.
+
+        :param failures: Dictionary mapping publication identifiers to corresponding CoverageFailure objects
+        :type failures: Dict[str, List[CoverageFailure]]
+
+        :param identifier: Publication's identifier
+        :type identifier: Identifier
+
+        :param error_message: Message describing the failure
+        :type error_message: str
+
+        :param transient: Boolean value indicating whether the failure is final or it can go away in the future
+        :type transient: bool
+
+        :return: CoverageFailure object describing the error
+        :rtype: CoverageFailure
+        """
+        if identifier not in failures:
+            failures[identifier.identifier] = []
+
+        failure = CoverageFailure(
+            identifier,
+            error_message,
+            data_source=self.data_source,
+            transient=transient,
+        )
+        failures[identifier.identifier].append(failure)
+
+        return failure
+
+    def _record_publication_unrecognizable_identifier(self, publication: opds2_ast.OPDS2Publication) -> None:
+        """Record a publication's unrecognizable identifier, i.e. identifier that has an unknown format
+            and could not be parsed by CM.
+
+        :param publication: OPDS 2.x publication object
+        :type publication: opds2_ast.OPDS2Publication
+        """
+        original_identifier = publication.metadata.identifier
+        title = publication.metadata.title
+
+        if original_identifier is None:
+            self._logger.warning(f"Publication '{title}' does not have an identifier.")
+        else:
+            self._logger.warning(f"Publication # {original_identifier} ('{title}') has an unrecognizable identifier.")
+
     def extract_next_links(self, feed):
         """Extracts "next" links from the feed.
 
@@ -867,6 +935,12 @@ class OPDS2Importer(OPDSImporter):
         failures = {}
 
         for publication in self._get_publications(feed):
+            recognized_identifier = self._extract_identifier(publication)
+
+            if not recognized_identifier or not self._is_identifier_allowed(recognized_identifier):
+                self._record_publication_unrecognizable_identifier(publication)
+                continue
+
             publication_metadata = self._extract_publication_metadata(
                 feed, publication, self.data_source_name
             )
@@ -883,19 +957,16 @@ class OPDS2Importer(OPDSImporter):
             )
 
             if publication:
-                identifier = self._extract_identifier(publication)
+                recognized_identifier = self._extract_identifier(publication)
 
-                if identifier:
-                    if publication.metadata.identifier not in failures:
-                        failures[identifier.identifier] = []
-
-                    failure = CoverageFailure(
-                        identifier,
-                        error.error_message,
-                        data_source=self.data_source,
-                        transient=False,
+                if not recognized_identifier or not self._is_identifier_allowed(recognized_identifier):
+                    self._record_publication_unrecognizable_identifier(publication)
+                else:
+                    self._record_coverage_failure(
+                        failures, recognized_identifier, error.error_message
                     )
-                    failures[identifier.identifier].append(failure)
+            else:
+                self._logger.warning(f"{error.error_message}")
 
         return publication_metadata_dictionary, failures
 
