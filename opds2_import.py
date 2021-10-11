@@ -1,14 +1,18 @@
+import json
 import logging
+from contextlib import contextmanager
 from io import BytesIO, StringIO
-from typing import Dict, List
+from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import urljoin, urlparse
 
+import sqlalchemy
 import webpub_manifest_parser.opds2.ast as opds2_ast
 from flask_babel import lazy_gettext as _
 from webpub_manifest_parser.core import ManifestParserFactory, ManifestParserResult
 from webpub_manifest_parser.core.analyzer import NodeFinder
 from webpub_manifest_parser.core.ast import Manifestlike
 from webpub_manifest_parser.errors import BaseError
+from webpub_manifest_parser.opds2 import OPDS2FeedParserFactory
 from webpub_manifest_parser.opds2.registry import (
     OPDS2LinkRelationsRegistry,
     OPDS2MediaTypesRegistry,
@@ -39,6 +43,16 @@ from .model import (
     RightsStatus,
     Subject,
 )
+from .model.configuration import (
+    ConfigurationAttributeType,
+    ConfigurationFactory,
+    ConfigurationGrouping,
+    ConfigurationMetadata,
+    ConfigurationOption,
+    ConfigurationStorage,
+    HasExternalIntegration,
+)
+from .model.constants import IdentifierType
 from .opds_import import OPDSImporter, OPDSImportMonitor
 from .util.http import BadResponseException
 from .util.opds_writer import OPDSFeed
@@ -100,18 +114,84 @@ class RWPMManifestParser(object):
         return result
 
 
-class OPDS2Importer(OPDSImporter):
+class OPDS2ImporterConfiguration(ConfigurationGrouping):
+    """Contains configuration settings of ProQuestOPDS2Importer."""
+
+    ALL_SUPPORTED_IDENTIFIER_TYPES = set(
+        [identifier_type.value for identifier_type in IdentifierType]
+    )
+
+    supported_identifier_types = ConfigurationMetadata(
+        key="supported_identifier_types",
+        label=_("List of supported identifier types"),
+        description=_(
+            "Circulation Manager will be importing only publications with identifiers having one of the selected types."
+        ),
+        type=ConfigurationAttributeType.MENU,
+        required=False,
+        default=tuple(ALL_SUPPORTED_IDENTIFIER_TYPES),
+        options=[
+            ConfigurationOption(identifier_type, identifier_type)
+            for identifier_type in ALL_SUPPORTED_IDENTIFIER_TYPES
+        ],
+        format="narrow",
+    )
+
+    def get_supported_identifier_types(self) -> Set[str]:
+        """Return the list of supported identifier types.
+
+        By default, when the configuration setting hasn't been set yet, it returns all the available identifier types.
+
+        :return: List of supported identifier types
+        """
+        supported_identifier_types = self.supported_identifier_types
+
+        if supported_identifier_types:
+            return set(json.loads(supported_identifier_types))
+        else:
+            # By default, all the identifier types are supported.
+            return set(self.ALL_SUPPORTED_IDENTIFIER_TYPES)
+
+    def set_supported_identifier_types(
+        self,
+        value: Tuple[List[str], Set[str], List[IdentifierType], Set[IdentifierType]],
+    ) -> None:
+        """Update the list of supported identifier types.
+
+        :param value: New list of supported identifier types
+        """
+        if not isinstance(value, (list, set)):
+            raise ValueError("Argument 'value' must be either a list of set")
+
+        supported_identifier_types = []
+
+        for item in value:
+            if isinstance(item, str):
+                supported_identifier_types.append(item)
+            elif isinstance(item, IdentifierType):
+                supported_identifier_types.append(item.name)
+            else:
+                raise ValueError(
+                    "Argument 'value' must contain string or IdentifierType enumeration's items only"
+                )
+
+        self.supported_identifier_types = json.dumps(supported_identifier_types)
+
+
+class OPDS2Importer(OPDSImporter, HasExternalIntegration):
     """Imports editions and license pools from an OPDS 2.0 feed."""
 
     NAME = ExternalIntegration.OPDS2_IMPORT
     DESCRIPTION = _("Import books from a publicly-accessible OPDS 2.0 feed.")
+    SETTINGS = OPDSImporter.SETTINGS + OPDS2ImporterConfiguration.to_settings()
+
     NEXT_LINK_RELATION = "next"
 
     def __init__(
         self,
         db,
         collection,
-        parser,
+        parser=None,
         data_source_name=None,
         identifier_mapping=None,
         http_get=None,
@@ -168,6 +248,9 @@ class OPDS2Importer(OPDSImporter):
             mirrors,
         )
 
+        if parser is None:
+            parser = RWPMManifestParser(OPDS2FeedParserFactory())
+
         if not isinstance(parser, RWPMManifestParser):
             raise ValueError(
                 "Argument 'parser' must be an instance of {0}".format(
@@ -175,23 +258,13 @@ class OPDS2Importer(OPDSImporter):
                 )
             )
 
-        self._parser = parser
-        self._logger = logging.getLogger(__name__)
+        self._parser: RWPMManifestParser = parser
+        self._logger: logging.Logger = logging.getLogger(__name__)
 
-    def _is_identifier_allowed(self, identifier: Identifier) -> bool:
-        """Check the identifier and return a boolean value indicating whether CM can import it.
-
-        NOTE: Currently, this method hard codes allowed identifier types.
-        The next PR will add an additional configuration setting allowing to override this behaviour
-        and configure allowed identifier types in the CM Admin UI.
-
-        :param identifier: Identifier object
-        :type identifier: Identifier
-
-        :return: Boolean value indicating whether CM can import the identifier
-        :rtype: bool
-        """
-        return identifier.type == Identifier.ISBN
+        self._external_integration_id: int = collection.external_integration.id
+        self._configuration_storage: ConfigurationStorage = ConfigurationStorage(self)
+        self._configuration_factory: ConfigurationFactory = ConfigurationFactory()
+        self._supported_identifier_types: Optional[set] = None
 
     def _extract_subjects(self, subjects):
         """Extract a list of SubjectData objects from the webpub-manifest-parser's subject.
@@ -376,9 +449,7 @@ class OPDS2Importer(OPDSImporter):
         :rtype: List[LinkData]
         """
         self._logger.debug(
-            "Started extracting image links from {0}".format(
-                encode(publication.images)
-            )
+            "Started extracting image links from {0}".format(encode(publication.images))
         )
 
         if not publication.images:
@@ -397,7 +468,8 @@ class OPDS2Importer(OPDSImporter):
         sorted_raw_image_links = list(
             reversed(
                 sorted(
-                    publication.images.links, key=lambda link: (link.width or 0, link.height or 0)
+                    publication.images.links,
+                    key=lambda link: (link.width or 0, link.height or 0),
                 )
             )
         )
@@ -764,6 +836,35 @@ class OPDS2Importer(OPDSImporter):
 
         return formats
 
+    @contextmanager
+    def _get_configuration(
+        self, db: sqlalchemy.orm.session.Session
+    ) -> OPDS2ImporterConfiguration:
+        """Return the configuration object.
+
+        :param db: Database session
+        :type db: sqlalchemy.orm.session.Session
+
+        :return: Configuration object
+        :rtype: OPDS2ImporterConfiguration
+        """
+        with self._configuration_factory.create(
+            self._configuration_storage, db, OPDS2ImporterConfiguration
+        ) as configuration:
+            yield configuration
+
+    def _get_supported_identifier_types(self) -> Set[int]:
+        """Return a set of supported identifier types.
+
+        :return: Set of supported identifier types
+        :rtype: Set[int]
+        """
+        if self._supported_identifier_types is None:
+            with self._get_configuration(self._db) as configuration:
+                self._supported_identifier_types = configuration.get_supported_identifier_types()
+
+        return self._supported_identifier_types
+
     @staticmethod
     def _get_publications(feed):
         """Return all the publications in the feed.
@@ -825,6 +926,19 @@ class OPDS2Importer(OPDSImporter):
 
         return open_access_rights_link
 
+    def _is_identifier_type_supported(self, identifier: Identifier) -> bool:
+        """Check the identifier's type and return a boolean value indicating whether it's supported by the collection.
+
+        :param identifier: Identifier object
+        :type identifier: Identifier
+
+        :return: Boolean value indicating whether the identifier's type is supported by the collection.
+        :rtype: bool
+        """
+        supported_identifier_types = self._get_supported_identifier_types()
+
+        return identifier.type in supported_identifier_types
+
     def _record_coverage_failure(
         self,
         failures: Dict[str, List[CoverageFailure]],
@@ -862,7 +976,9 @@ class OPDS2Importer(OPDSImporter):
 
         return failure
 
-    def _record_publication_unrecognizable_identifier(self, publication: opds2_ast.OPDS2Publication) -> None:
+    def _record_not_supported_identifier(
+        self, publication: opds2_ast.OPDS2Publication
+    ) -> None:
         """Record a publication's unrecognizable identifier, i.e. identifier that has an unknown format
             and could not be parsed by CM.
 
@@ -875,7 +991,22 @@ class OPDS2Importer(OPDSImporter):
         if original_identifier is None:
             self._logger.warning(f"Publication '{title}' does not have an identifier.")
         else:
-            self._logger.warning(f"Publication # {original_identifier} ('{title}') has an unrecognizable identifier.")
+            self._logger.warning(
+                f"Publication '{title}' has an unsupported identifier: {original_identifier}."
+            )
+
+    def external_integration(
+        self, db: sqlalchemy.orm.session.Session
+    ) -> ExternalIntegration:
+        """Return an external integration associated with this object.
+
+        :param db: Database session
+        :type db: sqlalchemy.orm.session.Session
+
+        :return: External integration associated with this object
+        :rtype: core.model.configuration.ExternalIntegration
+        """
+        return self.collection.external_integration
 
     def extract_next_links(self, feed):
         """Extracts "next" links from the feed.
@@ -937,8 +1068,10 @@ class OPDS2Importer(OPDSImporter):
         for publication in self._get_publications(feed):
             recognized_identifier = self._extract_identifier(publication)
 
-            if not recognized_identifier or not self._is_identifier_allowed(recognized_identifier):
-                self._record_publication_unrecognizable_identifier(publication)
+            if not recognized_identifier or not self._is_identifier_type_supported(
+                recognized_identifier
+            ):
+                self._record_not_supported_identifier(publication)
                 continue
 
             publication_metadata = self._extract_publication_metadata(
@@ -959,8 +1092,10 @@ class OPDS2Importer(OPDSImporter):
             if publication:
                 recognized_identifier = self._extract_identifier(publication)
 
-                if not recognized_identifier or not self._is_identifier_allowed(recognized_identifier):
-                    self._record_publication_unrecognizable_identifier(publication)
+                if not recognized_identifier or not self._is_identifier_type_supported(
+                    recognized_identifier
+                ):
+                    self._record_not_supported_identifier(publication)
                 else:
                     self._record_coverage_failure(
                         failures, recognized_identifier, error.error_message
