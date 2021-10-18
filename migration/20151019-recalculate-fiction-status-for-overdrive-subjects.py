@@ -17,16 +17,20 @@ class RecalculateFictionStatusMonitor(SubjectSweepMonitor):
 
     def __init__(self, _db, interval_seconds=None):
         super(RecalculateFictionStatusMonitor, self).__init__(
-            _db, "20150825 migration - Recalculate age range for children's books",
-            interval_seconds, batch_size=1000)
+            _db,
+            "20150825 migration - Recalculate age range for children's books",
+            interval_seconds,
+            batch_size=1000,
+        )
 
     def subject_query(self):
-        return self._db.query(Subject).filter(Subject.type==Subject.OVERDRIVE)
+        return self._db.query(Subject).filter(Subject.type == Subject.OVERDRIVE)
 
     def process_identifier(self, subject):
         old_fiction = subject.fiction
         old_audience = subject.audience
         subject.assign_to_genre()
         print("%s %s %s" % (subject.identifier, subject.fiction, subject.audience))
+
 
 RunMonitorScript(RecalculateFictionStatusMonitor).run()
