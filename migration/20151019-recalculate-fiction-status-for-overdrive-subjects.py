@@ -2,18 +2,15 @@
 """Recalculate the age range for all subjects whose audience is Children or Young Adult."""
 import os
 import sys
+
 bin_dir = os.path.split(__file__)[0]
 package_dir = os.path.join(bin_dir, "..", "..")
 sys.path.append(os.path.abspath(package_dir))
-from core.monitor import SubjectSweepMonitor
 from core.classifier import Classifier
-from core.model import (
-    production_session,
-    DataSource,
-    Edition,
-    Subject,
-)
+from core.model import DataSource, Edition, Subject, production_session
+from core.monitor import SubjectSweepMonitor
 from core.scripts import RunMonitorScript
+
 
 class RecalculateFictionStatusMonitor(SubjectSweepMonitor):
     """Recalculate the age range for every young adult or children's subject."""

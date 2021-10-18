@@ -3,20 +3,23 @@
 
 import os
 import sys
+
 bin_dir = os.path.split(__file__)[0]
 package_dir = os.path.join(bin_dir, "..")
 sys.path.append(os.path.abspath(package_dir))
-from monitor import IdentifierSweepMonitor
+from threem import ThreeMAPI
+
 from model import (
+    DeliveryMechanism,
+    Edition,
     Identifier,
     LicensePool,
-    DeliveryMechanism,
     LicensePoolDeliveryMechanism,
-    Edition,
 )
-from scripts import RunMonitorScript
+from monitor import IdentifierSweepMonitor
 from overdrive import OverdriveAPI, OverdriveRepresentationExtractor
-from threem import ThreeMAPI
+from scripts import RunMonitorScript
+
 
 class SetDeliveryMechanismMonitor(IdentifierSweepMonitor):
 
