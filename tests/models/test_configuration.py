@@ -874,6 +874,19 @@ class TestConfigurationGrouping(object):
         assert setting_value == expected_value
         configuration_storage.load.assert_called_once_with(db, setting_name)
 
+    def test_getter_return_default_value(self):
+        # Arrange
+        configuration_storage = create_autospec(spec=ConfigurationStorage)
+        configuration_storage.load = MagicMock(return_value=None)
+        db = create_autospec(spec=sqlalchemy.orm.session.Session)
+        configuration = TestConfiguration(configuration_storage, db)
+
+        # Act
+        setting_value = configuration.setting1
+
+        # Assert
+        assert SETTING1_DEFAULT == setting_value
+
     @parameterized.expand(
         [("setting1", "setting1", 12345), ("setting2", "setting2", "12345")]
     )

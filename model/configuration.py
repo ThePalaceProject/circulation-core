@@ -1171,7 +1171,12 @@ class ConfigurationMetadata(object):
                 "owner must be an instance of ConfigurationSettingsMetadataOwner type"
             )
 
-        return owner_instance.get_setting_value(self._key)
+        setting_value = owner_instance.get_setting_value(self._key)
+
+        if setting_value is None:
+            setting_value = self.default
+
+        return setting_value
 
     def __set__(self, owner_instance, value):
         """Updates the setting's value
