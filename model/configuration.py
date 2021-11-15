@@ -1178,7 +1178,10 @@ class ConfigurationMetadata(object):
         else:
             # LIST and MENU configuration settings are stored as JSON-serialized lists in the database.
             # We need to deserialize them to get actual values.
-            if self.type in (ConfigurationAttributeType.LIST, ConfigurationAttributeType.MENU):
+            if self.type in (
+                ConfigurationAttributeType.LIST,
+                ConfigurationAttributeType.MENU,
+            ):
                 if isinstance(setting_value, str):
                     setting_value = json.loads(setting_value)
                 else:
