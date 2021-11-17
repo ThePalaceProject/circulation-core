@@ -1063,7 +1063,9 @@ class CirculationData(MetaToModelUtility):
         self.__links = None
         self.links = links
 
-        # Information about individual terms for each license in a pool.
+        # Information about individual terms for each license in a pool. If we are
+        # given licenses then they are used to calculate values for the LicensePool
+        # instead of directly using the values that are given to CirculationData.
         self.licenses = licenses
 
     @property
