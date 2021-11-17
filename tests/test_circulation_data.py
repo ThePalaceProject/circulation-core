@@ -243,6 +243,7 @@ class TestCirculationData(DatabaseTest):
             expires=(utc_now() + datetime.timedelta(days=7)),
             checkouts_left=None,
             checkouts_available=1,
+            terms_concurrency=1,
             status=LicenseStatus.available,
         )
 
