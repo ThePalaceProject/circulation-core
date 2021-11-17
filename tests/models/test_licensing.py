@@ -305,7 +305,15 @@ class TestLicense(DatabaseTest):
         assert False == is_new
 
     @pytest.mark.parametrize(
-        "license_type,is_perpetual,is_time_limited,is_loan_limited,is_expired,owned,available",
+        (
+            "license_type",
+            "is_perpetual",
+            "is_time_limited",
+            "is_loan_limited",
+            "is_inactive",
+            "total_remaining_loans",
+            "currently_available_loans",
+        ),
         [
             ("perpetual", True, False, False, False, 2, 1),
             ("time_limited", False, True, False, False, 1, 1),
@@ -322,17 +330,17 @@ class TestLicense(DatabaseTest):
         is_perpetual,
         is_time_limited,
         is_loan_limited,
-        is_expired,
-        owned,
-        available,
+        is_inactive,
+        total_remaining_loans,
+        currently_available_loans,
     ):
         license = getattr(self, license_type)
         assert is_perpetual == license.is_perpetual
         assert is_time_limited == license.is_time_limited
         assert is_loan_limited == license.is_loan_limited
-        assert is_expired == license.is_expired
-        assert owned == license.owned
-        assert available == license.available
+        assert is_inactive == license.is_inactive
+        assert total_remaining_loans == license.total_remaining_loans
+        assert currently_available_loans == license.currently_available_loans
 
     @pytest.mark.parametrize(
         "license_type,left,available",

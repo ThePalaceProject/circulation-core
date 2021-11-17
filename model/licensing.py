@@ -65,7 +65,7 @@ class LicenseFunctions:
         return self.checkouts_left is not None
 
     @property
-    def is_expired(self) -> bool:
+    def is_inactive(self) -> bool:
         now = utc_now()
         return (
             (self.expires and self.expires <= now)
@@ -74,8 +74,8 @@ class LicenseFunctions:
         )
 
     @property
-    def owned(self) -> int:
-        if self.is_expired:
+    def total_remaining_loans(self) -> int:
+        if self.is_inactive:
             return 0
         elif self.is_loan_limited:
             return self.checkouts_left
@@ -83,8 +83,8 @@ class LicenseFunctions:
             return self.terms_concurrency
 
     @property
-    def available(self) -> int:
-        if self.is_expired:
+    def currently_available_loans(self) -> int:
+        if self.is_inactive:
             return 0
         else:
             return self.checkouts_available
@@ -140,7 +140,7 @@ class License(Base, LicenseFunctions):
         """
         Update licenses internal accounting when a license is checked out.
         """
-        if not self.is_expired:
+        if not self.is_inactive:
             if self.checkouts_left:
                 self.checkouts_left -= 1
             if self.checkouts_available:
@@ -152,7 +152,7 @@ class License(Base, LicenseFunctions):
         """
         Update a licenses internal accounting when a license is checked in.
         """
-        if not self.is_expired:
+        if not self.is_inactive:
             available = [self.checkouts_available + 1, self.terms_concurrency]
             if self.is_loan_limited:
                 available.append(self.checkouts_left)
@@ -658,8 +658,8 @@ class LicensePool(Base):
         """
         _db = Session.object_session(self)
 
-        licenses_owned = sum([l.owned for l in self.licenses])
-        licenses_available = sum([l.available for l in self.licenses])
+        licenses_owned = sum([l.total_remaining_loans for l in self.licenses])
+        licenses_available = sum([l.currently_available_loans for l in self.licenses])
 
         holds = self.get_active_holds()
 
@@ -1102,7 +1102,7 @@ class LicensePool(Base):
         now = utc_now()
 
         for license in self.licenses:
-            if license.is_expired:
+            if license.is_inactive:
                 continue
 
             active_loan_count = len(

@@ -321,7 +321,7 @@ class TestCirculationData(DatabaseTest):
             licenses_owned=999,
             licenses_available=999,
             licenses_reserved=999,
-            patrons_in_hold_queue=999
+            patrons_in_hold_queue=999,
         )
 
         circulation_data.apply(self._db, pool.collection)
@@ -344,7 +344,7 @@ class TestCirculationData(DatabaseTest):
             licenses_owned=999,
             licenses_available=999,
             licenses_reserved=999,
-            patrons_in_hold_queue=999
+            patrons_in_hold_queue=999,
         )
 
         circulation_data.apply(self._db, pool.collection)

@@ -1366,9 +1366,9 @@ class CirculationData(MetaToModelUtility):
             if self.licenses is not None:
                 # If we have licenses set, use those to set our availability
                 old_licenses = list(pool.licenses or [])
-                new_licenses = []
-                for license in self.licenses:
-                    new_licenses.append(license.add_to_pool(_db, pool))
+                new_licenses = [
+                    license.add_to_pool(_db, pool) for license in self.licenses
+                ]
                 for license in old_licenses:
                     if license not in new_licenses:
                         self.log.warning(
