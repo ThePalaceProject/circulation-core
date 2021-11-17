@@ -951,8 +951,6 @@ class Work(Base):
         if policy.classify or policy.choose_summary or policy.calculate_quality:
             # Find all related IDs that might have associated descriptions,
             # classifications, or measurements.
-            _db = Session.object_session(self)
-
             direct_identifier_ids = self._direct_identifier_ids
             all_identifier_ids = self.all_identifier_ids(policy=policy)
         else:
@@ -1165,7 +1163,6 @@ class Work(Base):
     def calculate_marc_record(self):
         from ..marc import Annotator, MARCExporter
 
-        _db = Session.object_session(self)
         record = MARCExporter.create_record(
             self, annotator=Annotator, force_create=True
         )
@@ -1204,7 +1201,6 @@ class Work(Base):
 
         :return: A WorkCoverageRecord.
         """
-        _db = Session.object_session(self)
         record, is_new = WorkCoverageRecord.add_for(
             self, operation=operation, status=CoverageRecord.REGISTERED
         )
@@ -1917,7 +1913,7 @@ class Work(Base):
                 from ..external_search import ExternalSearchIndex
 
                 search_index = ExternalSearchIndex(_db)
-            except CannotLoadConfiguration as e:
+            except CannotLoadConfiguration:
                 # No search index is configured. This is fine -- just skip that part.
                 pass
         if search_index is not None:

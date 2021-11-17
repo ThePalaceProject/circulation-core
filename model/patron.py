@@ -221,8 +221,6 @@ class Patron(Base):
         return [loan.work for loan in self.loans if loan.work]
 
     def works_on_loan_or_on_hold(self):
-        db = Session.object_session(self)
-        results = set()
         holds = [hold.work for hold in self.holds if hold.work]
         loans = self.works_on_loan()
         return set(holds + loans)

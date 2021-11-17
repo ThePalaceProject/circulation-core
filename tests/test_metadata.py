@@ -39,7 +39,7 @@ from ..model import (
 from ..model.configuration import ExternalIntegrationLink
 from ..s3 import MockS3Uploader
 from ..testing import DatabaseTest, DummyHTTPClient, DummyMetadataClient
-from ..util.datetime_helpers import datetime_utc, strptime_utc, to_utc, utc_now
+from ..util.datetime_helpers import datetime_utc, strptime_utc, utc_now
 from ..util.http import RemoteIntegrationException
 
 
@@ -108,8 +108,8 @@ class TestMetadataImporter(DatabaseTest):
         source2 = DataSource.lookup(self._db, DataSource.METADATA_WRANGLER)
         edition = self._edition()
         identifier = edition.primary_identifier
-        c1 = identifier.classify(source1, Subject.TAG, "i will persist")
-        c2 = identifier.classify(source2, Subject.TAG, "i will perish")
+        identifier.classify(source1, Subject.TAG, "i will persist")
+        identifier.classify(source2, Subject.TAG, "i will perish")
 
         # Now we get some new metadata from source #2.
         subjects = [SubjectData(type=Subject.TAG, identifier="i will conquer")]

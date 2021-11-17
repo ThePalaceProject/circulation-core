@@ -1,5 +1,4 @@
 import datetime
-from io import StringIO
 from urllib.parse import quote
 
 import pytest
@@ -25,7 +24,7 @@ from ..model import (
     Work,
     get_one,
 )
-from ..s3 import MockS3Uploader, S3Uploader
+from ..s3 import MockS3Uploader
 from ..testing import DatabaseTest
 from ..util.datetime_helpers import datetime_utc, utc_now
 
@@ -572,7 +571,7 @@ class TestMARCExporter(DatabaseTest):
         assert record.as_marc() == new_record.as_marc()
 
     def test_records(self):
-        integration = self._integration()
+        self._integration()
         now = utc_now()
         exporter = MARCExporter.from_config(self._default_library)
         annotator = Annotator()

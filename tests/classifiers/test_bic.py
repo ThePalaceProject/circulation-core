@@ -1,5 +1,5 @@
 from ... import classifier
-from ...classifier import *
+from ...classifier import Classifier
 from ...classifier.bic import BICClassifier as BIC
 
 

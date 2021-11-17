@@ -992,9 +992,7 @@ class TestWork(DatabaseTest):
 
     def test_top_genre(self):
         work = self._work()
-        identifier = work.presentation_edition.primary_identifier
         genres = self._db.query(Genre).all()
-        source = DataSource.lookup(self._db, DataSource.AXIS_360)
 
         # returns None when work has no genres
         assert None == work.top_genre()
@@ -1032,7 +1030,7 @@ class TestWork(DatabaseTest):
 
         # Create a third Collection that's just hanging around, not
         # doing anything.
-        collection3 = self._collection()
+        self._collection()
 
         # These are the edition's authors.
         [contributor1] = [
@@ -1595,9 +1593,9 @@ class TestWork(DatabaseTest):
         assert [] == list(index.docs.values())
 
     def test_for_unchecked_subjects(self):
-
+        # Create two works
         w1 = self._work(with_license_pool=True)
-        w2 = self._work()
+        self._work()
         identifier = w1.license_pools[0].identifier
 
         # Neither of these works is associated with any subjects, so

@@ -13,7 +13,7 @@ from sqlalchemy.sql.functions import func
 
 # For backwards compatibility, import items that were moved to
 # languages.py
-from .languages import LanguageCodes, LookupTable
+from .languages import LanguageCodes, LookupTable  # noqa
 
 
 def batch(iterable, size=1):

@@ -12,7 +12,6 @@ from ..log import (
     CloudwatchLogs,
     JSONFormatter,
     LogConfiguration,
-    Logger,
     Loggly,
     LogglyHandler,
     StringFormatter,
@@ -31,7 +30,7 @@ class TestJSONFormatter(object):
         # Cause an exception so we can capture its exc_info()
         try:
             raise ValueError("fake exception")
-        except ValueError as e:
+        except ValueError:
             exc_info = sys.exc_info()
 
         record = logging.LogRecord(

@@ -162,9 +162,6 @@ class TestIdentifier(DatabaseTest):
         # already exist.
         isbn_urn = "urn:isbn:9781453219539"
         urns = [new_urn, isbn_urn]
-        only_overdrive = [Identifier.OVERDRIVE_ID]
-        only_isbn = [Identifier.OVERDRIVE_ID]
-        everything = []
 
         success, failure = Identifier.parse_urns(
             self._db, urns, allowed_types=[Identifier.OVERDRIVE_ID]
@@ -269,7 +266,7 @@ class TestIdentifier(DatabaseTest):
         level_4_equivalent = self._identifier()
         level_3_equivalent.equivalent_to(data_source, level_4_equivalent, 0.6)
 
-        unrelated = self._identifier()
+        self._identifier()  # Unrelated identifier
 
         # With a low threshold and enough levels, we find all the identifiers.
         high_levels_low_threshold = PresentationCalculationPolicy(
@@ -519,10 +516,10 @@ class TestIdentifier(DatabaseTest):
         )
 
         # One of them has coverage from OCLC Classify
-        c1 = self._coverage_record(g1, oclc)
+        self._coverage_record(g1, oclc)
 
         # The other has coverage from a specific operation on OCLC Classify
-        c2 = self._coverage_record(g2, oclc, "some operation")
+        self._coverage_record(g2, oclc, "some operation")
 
         # Here's a web record, just sitting there.
         w, ignore = Edition.for_foreign_id(
@@ -596,8 +593,6 @@ class TestIdentifier(DatabaseTest):
 
     def test_missing_coverage_from_with_cutoff_date(self):
         gutenberg = DataSource.lookup(self._db, DataSource.GUTENBERG)
-        oclc = DataSource.lookup(self._db, DataSource.OCLC)
-        web = DataSource.lookup(self._db, DataSource.WEB)
 
         # Here's an Edition with a coverage record from OCLC classify.
         gutenberg, ignore = Edition.for_foreign_id(
@@ -709,7 +704,6 @@ class TestIdentifier(DatabaseTest):
         assert 2 == len(entry.links)
         assert any(filter(lambda l: l.href == "http://thumb", entry.links))
         # And the updated time has been changed accordingly.
-        expected = thumbnail.resource.representation.mirrored_at
         assert AtomFeed._strftime(even_later) == entry.updated
 
     @parameterized.expand(

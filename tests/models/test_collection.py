@@ -302,12 +302,11 @@ class TestCollection(DatabaseTest):
         assert 349 == self.collection.default_loan_period(client, audio)
 
         # The same value is used for other clients.
-        client2 = self._integration_client()
+        self._integration_client()
         assert 347 == self.collection.default_loan_period(client)
         assert 349 == self.collection.default_loan_period(client, audio)
 
     def test_default_reservation_period(self):
-        library = self._default_library
         # The default when no value is set.
         assert (
             Collection.STANDARD_DEFAULT_RESERVATION_PERIOD
@@ -360,7 +359,7 @@ class TestCollection(DatabaseTest):
         self.collection.external_integration.url = "url"
         self.collection.external_integration.username = "username"
         self.collection.external_integration.password = "password"
-        setting = self.collection.external_integration.set_setting("setting", "value")
+        self.collection.external_integration.set_setting("setting", "value")
 
         data = self.collection.explain()
         assert [

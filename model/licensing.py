@@ -362,7 +362,7 @@ class LicensePool(Base):
             priority = DataSourceConstants.OPEN_ACCESS_SOURCE_PRIORITY.index(
                 self.data_source.name
             )
-        except ValueError as e:
+        except ValueError:
             # The source of this download is not mentioned in our
             # priority list. Treat it as the lowest priority.
             priority = -1
@@ -433,7 +433,6 @@ class LicensePool(Base):
         """Set .open_access based on whether there is currently
         an open-access LicensePoolDeliveryMechanism for this LicensePool.
         """
-        old_status = self.open_access
         for dm in self.delivery_mechanisms:
             if dm.is_open_access:
                 self.open_access = True
@@ -580,7 +579,6 @@ class LicensePool(Base):
         Log the implied changes with the analytics provider.
         """
         changes_made = False
-        _db = Session.object_session(self)
         if not as_of:
             as_of = utc_now()
         elif as_of == CirculationEvent.NO_DATE:
@@ -758,7 +756,6 @@ class LicensePool(Base):
             return max(value - delta, 0)
 
         CE = CirculationEvent
-        added = False
         if type == CE.DISTRIBUTOR_HOLD_PLACE:
             new_patrons_in_hold_queue += delta
             if new_licenses_available:
@@ -1094,7 +1091,6 @@ class LicensePool(Base):
         _db = Session.object_session(self)
         work = None
         is_new = False
-        licensepools_changed = False
         if self.open_access and presentation_edition.permanent_work_id:
             # This is an open-access book. Use the Work for all
             # open-access books associated with this book's permanent
@@ -1123,7 +1119,6 @@ class LicensePool(Base):
                 presentation_edition.language,
             )
             self.work = work
-            licensepools_changed = True
 
         # All LicensePools with a given Identifier must share a work.
         existing_works = set([x.work for x in self.identifier.licensed_through])
@@ -1171,7 +1166,6 @@ class LicensePool(Base):
                     pool.calculate_work(
                         exclude_search=exclude_search, even_if_no_title=even_if_no_title
                     )
-                    licensepools_changed = True
 
         else:
             # There is no better choice than creating a brand new Work.
@@ -1181,13 +1175,11 @@ class LicensePool(Base):
             _db = Session.object_session(self)
             _db.add(work)
             flush(_db)
-            licensepools_changed = True
 
         # Associate this LicensePool and its Edition with the work we
         # chose or created.
         if not self in work.license_pools:
             work.license_pools.append(self)
-            licensepools_changed = True
 
         # Recalculate the display information for the Work. Either the
         # associated LicensePools have changed, which may have caused

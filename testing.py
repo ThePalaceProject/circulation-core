@@ -1,4 +1,3 @@
-import inspect
 import json
 import logging
 import os
@@ -7,12 +6,9 @@ import tempfile
 import time
 import uuid
 from datetime import timedelta
-from pdb import set_trace
 
 import mock
 import pytest
-from psycopg2.errors import UndefinedTable
-from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm.session import Session
 
 from . import external_search
@@ -21,7 +17,6 @@ from .config import Configuration
 from .coverage import (
     BibliographicCoverageProvider,
     CollectionCoverageProvider,
-    CoverageFailure,
     IdentifierCoverageProvider,
     WorkCoverageProvider,
 )
@@ -56,9 +51,7 @@ from .model import (
     LicensePool,
     LicensePoolDeliveryMechanism,
     Patron,
-    PresentationCalculationPolicy,
     Representation,
-    Resource,
     RightsStatus,
     SessionManager,
     Subject,
@@ -387,9 +380,7 @@ class DatabaseTest(object):
             data_source_name = DataSource.GUTENBERG
         if fiction is None:
             fiction = True
-        new_edition = False
         if not presentation_edition:
-            new_edition = True
             presentation_edition = self._edition(
                 title=title,
                 language=language,
@@ -1640,7 +1631,6 @@ class MockRequestsResponse(object):
         """Null implementation of raise_for_status, a method
         implemented by real requests Response objects.
         """
-        pass
 
 
 @pytest.fixture(autouse=True, scope="session")

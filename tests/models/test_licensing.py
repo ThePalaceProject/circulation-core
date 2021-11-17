@@ -13,14 +13,12 @@ from ...model.collection import CollectionMissing
 from ...model.complaint import Complaint
 from ...model.constants import MediaTypes
 from ...model.contributor import Contributor
-from ...model.coverage import WorkCoverageRecord
 from ...model.datasource import DataSource
 from ...model.edition import Edition
 from ...model.identifier import Identifier
 from ...model.licensing import (
     DeliveryMechanism,
     Hold,
-    License,
     LicensePool,
     LicensePoolDeliveryMechanism,
     Loan,
@@ -189,13 +187,13 @@ class TestDeliveryMechanism(DatabaseTest):
         # for content_type and drm_scheme.
         with_drm_args = dict(content_type="type1", drm_scheme="scheme1")
         without_drm_args = dict(content_type="type1", drm_scheme=None)
-        with_drm = create(self._db, dm, **with_drm_args)
+        create(self._db, dm, **with_drm_args)
         pytest.raises(IntegrityError, create, self._db, dm, **with_drm_args)
         self._db.rollback()
 
         # You can't create two DeliveryMechanisms with the same value
         # for content_type and a null value for drm_scheme.
-        without_drm = create(self._db, dm, **without_drm_args)
+        create(self._db, dm, **without_drm_args)
         pytest.raises(IntegrityError, create, self._db, dm, **without_drm_args)
         self._db.rollback()
 
@@ -216,7 +214,7 @@ class TestRightsStatus(DatabaseTest):
 
     def test_unique_uri_constraint(self):
         # We already have this RightsStatus.
-        status = RightsStatus.lookup(self._db, RightsStatus.IN_COPYRIGHT)
+        RightsStatus.lookup(self._db, RightsStatus.IN_COPYRIGHT)
 
         # Let's try to create another one with the same URI.
         dupe = RightsStatus(uri=RightsStatus.IN_COPYRIGHT)
@@ -1147,7 +1145,6 @@ class TestLicensePool(DatabaseTest):
         yesterday = now - datetime.timedelta(days=1)
         tomorrow = now + datetime.timedelta(days=1)
 
-        fulfillment = pool.delivery_mechanisms[0]
         position = 99
         external_identifier = self._str
         hold, is_new = pool.on_hold_to(
@@ -1264,7 +1261,7 @@ class TestLicensePoolDeliveryMechanism(DatabaseTest):
 
         # Set it back to a URL that does not imply open access, and
         # the status of the LicensePool is changed back.
-        non_open_access_status = lpdm.set_rights_status(uri)
+        lpdm.set_rights_status(uri)
         assert False == pool.open_access
 
         # Now add a second delivery mechanism, so the pool has one

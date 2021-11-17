@@ -1,5 +1,4 @@
 # encoding: utf-8
-import datetime
 
 from ..external_list import (
     ClassificationBasedMembershipManager,
@@ -8,7 +7,7 @@ from ..external_list import (
 )
 from ..model import DataSource, Edition, Identifier, Subject
 from ..testing import DatabaseTest, DummyMetadataClient
-from ..util.datetime_helpers import datetime_utc, strptime_utc, to_utc, utc_now
+from ..util.datetime_helpers import datetime_utc, strptime_utc, utc_now
 
 
 class TestCustomListFromCSV(DatabaseTest):

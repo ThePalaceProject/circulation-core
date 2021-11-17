@@ -1,5 +1,5 @@
 from ... import classifier
-from ...classifier import *
+from ...classifier import Classifier
 from ...classifier.ddc import DeweyDecimalClassifier as DDC
 
 
@@ -16,7 +16,6 @@ class TestDewey(object):
     def test_audience(self):
 
         child = Classifier.AUDIENCE_CHILDREN
-        adult = Classifier.AUDIENCE_ADULT
         young_adult = Classifier.AUDIENCE_YOUNG_ADULT
 
         def aud(identifier):

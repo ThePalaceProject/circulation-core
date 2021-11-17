@@ -245,7 +245,6 @@ class Monitor(object):
         """Do any work that needs to be done at the end, once the main work
         has completed successfully.
         """
-        pass
 
 
 class TimelineMonitor(Monitor):
@@ -448,7 +447,6 @@ class SweepMonitor(CollectionMonitor):
         timestamp = self.timestamp()
         offset = timestamp.counter
         new_offset = offset
-        exception = None
 
         # The timestamp for a SweepMonitor is purely informative --
         # we're not trying to capture all the events that happened
@@ -460,7 +458,6 @@ class SweepMonitor(CollectionMonitor):
 
         total_processed = 0
         while True:
-            old_offset = offset
             batch_started_at = utc_now()
             new_offset, batch_size = self.process_batch(offset)
             total_processed += batch_size
@@ -755,7 +752,6 @@ class MakePresentationReadyMonitor(NotPresentationReadyWorkSweepMonitor):
         if not edition:
             work = work.calculate_presentation()
         identifier = edition.primary_identifier
-        overall_success = True
         failures = []
         for provider in self.coverage_providers:
             covered_types = provider.input_identifier_types
@@ -1030,7 +1026,6 @@ class ScrubberMonitor(ReaperMonitor):
 
     def run_once(self, *args, **kwargs):
         """Find all rows that need to be scrubbed, and scrub them."""
-        rows_scrubbed = 0
         cls = self.MODEL_CLASS
         update = (
             cls.__table__.update()

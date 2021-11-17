@@ -1,6 +1,5 @@
 import datetime
 import logging
-import re
 import xml.etree.ElementTree as ET
 from io import StringIO
 
@@ -304,7 +303,6 @@ class TestAnnotators(DatabaseTest):
         work.rating = 0.6
         work.calculate_opds_entries(verbose=True)
         feed = AcquisitionFeed(self._db, self._str, self._url, [work], VerboseAnnotator)
-        url = self._url
         tag = feed.create_entry(work, None)
 
         nsmap = dict(schema="http://schema.org/")
@@ -596,11 +594,11 @@ class TestOPDS(DatabaseTest):
         facet_links = self.links(by_title, AcquisitionFeed.FACET_REL)
 
         library = self._default_library
-        order_facets = library.enabled_facets(Facets.ORDER_FACET_GROUP_NAME)
+        library.enabled_facets(Facets.ORDER_FACET_GROUP_NAME)
         availability_facets = library.enabled_facets(
             Facets.AVAILABILITY_FACET_GROUP_NAME
         )
-        collection_facets = library.enabled_facets(Facets.COLLECTION_FACET_GROUP_NAME)
+        library.enabled_facets(Facets.COLLECTION_FACET_GROUP_NAME)
 
         def link_for_facets(facets):
             return [x for x in facet_links if facets.query_string in x["href"]]
@@ -630,7 +628,6 @@ class TestOPDS(DatabaseTest):
         today_s = today.strftime("%Y-%m-%d")
         the_past = today - datetime.timedelta(days=2)
         the_past_s = the_past.strftime("%Y-%m-%d")
-        the_past_time = the_past.strftime(AtomFeed.TIME_FORMAT_NAIVE)
         the_distant_past = today - datetime.timedelta(days=100)
         the_distant_past_s = the_distant_past.strftime(AtomFeed.TIME_FORMAT_NAIVE)
         the_future = today + datetime.timedelta(days=2)
@@ -1356,7 +1353,6 @@ class TestOPDS(DatabaseTest):
         # The feed has no breadcrumb links, since we're not
         # searching the lane -- just using some aspects of the lane
         # to guide the search.
-        parentage = list(fantasy_lane.parentage)
         root = ET.fromstring(feed)
         breadcrumbs = root.find("{%s}breadcrumbs" % AtomFeed.SIMPLIFIED_NS)
         assert None == breadcrumbs
@@ -1479,9 +1475,6 @@ class TestAcquisitionFeed(DatabaseTest):
         """Verify that add_entrypoint_links calls _entrypoint_link
         on every EntryPoint passed in.
         """
-        m = AcquisitionFeed.add_entrypoint_links
-
-        old_entrypoint_link = AcquisitionFeed._entrypoint_link
 
         class Mock(object):
             attrs = dict(href="the response")
@@ -1770,7 +1763,6 @@ class TestAcquisitionFeed(DatabaseTest):
         # This work's OPDS entry was created with a namespace map
         # that did not include the drm: namespace.
         work.simple_opds_entry = "<entry><foo>bar</foo></entry>"
-        pool = work.license_pools[0]
 
         # But now the annotator is set up to insert a tag with that
         # namespace.
@@ -1979,9 +1971,6 @@ class TestAcquisitionFeed(DatabaseTest):
             feed = MockFeed()
             annotator = TestAnnotator()
 
-            entrypoint = add_breadcrumbs_kwargs.get("entrypoint", None)
-            include_lane = add_breadcrumbs_kwargs.get("include_lane", False)
-
             feed.add_breadcrumbs(lane, **add_breadcrumbs_kwargs)
 
             if not expect_breadcrumbs_for:
@@ -2014,7 +2003,6 @@ class TestAcquisitionFeed(DatabaseTest):
             # trickier, mainly because the URLs change once an
             # entrypoint is selected.
             previous_breadcrumb_url = None
-            actual_urls = []
 
             for i, crumb in enumerate(crumbs):
                 expect = expect_breadcrumbs_for[i]
@@ -2322,7 +2310,7 @@ class TestLookupAcquisitionFeed(DatabaseTest):
         # Even if the Identifier does have a Work, if the Works don't
         # match, we get the same error.
         edition, lp = self._edition(with_license_pool=True)
-        work2 = lp.calculate_work()
+        lp.calculate_work()
         feed, entry = self.entry(lp.identifier, work)
         assert entry == OPDSMessage(
             lp.identifier.urn, 500, expect_error % lp.identifier.urn
@@ -2377,7 +2365,6 @@ class TestLookupAcquisitionFeed(DatabaseTest):
         work = self._work(with_license_pool=True)
         work.verbose_opds_entry = "<entry>Cached</entry>"
         [pool1] = work.license_pools
-        identifier1 = pool1.identifier
 
         collection2 = self._collection()
         edition2 = self._edition()

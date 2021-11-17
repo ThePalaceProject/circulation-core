@@ -170,7 +170,7 @@ class Collection(Base, HasFullTableCache):
         try:
             collection = qu.one()
             is_new = False
-        except NoResultFound as e:
+        except NoResultFound:
             # Make a new Collection.
             collection, is_new = get_one_or_create(_db, Collection, name=name)
             if not is_new and collection.protocol != protocol:

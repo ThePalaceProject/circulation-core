@@ -140,7 +140,6 @@ class Edition(Base, EditionConstants):
         etc. However it happens, your name only shows up once on the
         front of the book.
         """
-        seen_authors = set()
         primary_author = None
         other_authors = []
         acceptable_substitutes = defaultdict(list)
@@ -616,7 +615,6 @@ class Edition(Base, EditionConstants):
 
     def calculate_presentation(self, policy=None):
         """Make sure the presentation of this Edition is up-to-date."""
-        _db = Session.object_session(self)
         changed = False
         if policy is None:
             policy = PresentationCalculationPolicy()

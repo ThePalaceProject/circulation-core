@@ -376,7 +376,7 @@ class TestMedian(object):
 
 class TestFastQueryCount(DatabaseTest):
     def test_no_distinct(self):
-        identifier = self._identifier()
+        self._identifier()
         qu = self._db.query(Identifier)
         assert 1 == fast_query_count(qu)
 

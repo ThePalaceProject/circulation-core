@@ -10,7 +10,6 @@ import unicodedata
 import uuid
 from collections import defaultdict
 from enum import Enum
-from pdb import set_trace
 
 from sqlalchemy import and_, exists, text
 from sqlalchemy.exc import ProgrammingError
@@ -113,7 +112,7 @@ class Script(object):
                 try:
                     parsed = strptime_utc(time_string, full_format)
                     return parsed
-                except ValueError as e:
+                except ValueError:
                     continue
         raise ValueError("Could not parse time: %s" % time_string)
 
@@ -158,7 +157,6 @@ class Script(object):
         :param exception: A stack trace for the exception, if any,
            that stopped the script from running.
         """
-        pass
 
 
 class TimestampScript(Script):
@@ -524,7 +522,7 @@ class IdentifierInputScript(InputScript):
             if identifier_type == cls.DATABASE_ID:
                 try:
                     arg = int(arg)
-                except ValueError as e:
+                except ValueError:
                     # We'll print out a warning later.
                     arg = None
                 if arg:
@@ -2431,7 +2429,6 @@ class DatabaseMigrationScript(Script):
         """Run each migration, first by timestamp and then by directory
         priority.
         """
-        previous = None
 
         def raise_error(migration_path, message, code=1):
             print()
@@ -2449,7 +2446,6 @@ class DatabaseMigrationScript(Script):
                     try:
                         self._run_migration(full_migration_path, timestamp)
                         self._db.commit()
-                        previous = migration_file
                     except SystemExit as se:
                         if se.code:
                             raise_error(
@@ -2488,7 +2484,7 @@ class DatabaseMigrationScript(Script):
 
                 if ok_to_execute:
                     if transactionless:
-                        new_session = self._run_migration_without_transaction(sql)
+                        self._run_migration_without_transaction(sql)
                     elif one_tx_per_statement:
                         commands = self._extract_statements_from_sql_file(
                             migration_path
@@ -2786,7 +2782,7 @@ class CheckContributorNamesInDB(IdentifierInputScript):
 
         contributor = contribution.contributor
 
-        identifier = contribution.edition.primary_identifier
+        contribution.edition.primary_identifier
 
         if contributor.sort_name and contributor.display_name:
             computed_sort_name_local_new = unicodedata.normalize(

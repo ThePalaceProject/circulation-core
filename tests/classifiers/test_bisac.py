@@ -1,5 +1,3 @@
-import re
-
 import pytest
 
 from ...classifier import BISACClassifier, Classifier
@@ -9,7 +7,6 @@ from ...classifier.bisac import (
     anything,
     fiction,
     juvenile,
-    m,
     nonfiction,
     something,
     ya,

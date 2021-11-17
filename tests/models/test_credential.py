@@ -316,8 +316,6 @@ class TestUniquenessConstraints(DatabaseTest):
     def test_duplicate_patron_credential(self):
         # A given patron can't have two global credentials with the same data
         # source and type.
-        patron = self._patron()
-
         c1 = Credential(
             data_source=self.data_source, type=self.type, patron=self.patron
         )

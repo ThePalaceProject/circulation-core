@@ -1,5 +1,4 @@
-from ... import classifier
-from ...classifier import *
+from ...classifier import *  # noqa
 
 
 class TestSimplifiedGenreClassifier(object):

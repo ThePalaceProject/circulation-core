@@ -76,8 +76,6 @@ def parse_identifier(db, identifier):
 class AccessNotAuthenticated(Exception):
     """No authentication is configured for this service"""
 
-    pass
-
 
 class SimplifiedOPDSLookup(object):
     """Tiny integration class for the Simplified 'lookup' protocol."""
@@ -191,15 +189,14 @@ class MetadataWranglerOPDSLookup(SimplifiedOPDSLookup, HasSelfTests):
            SelfTestResult objects.
         """
         lookup_class = lookup_class or MetadataWranglerOPDSLookup
-        results = dict()
 
         # Find all eligible Collections on the system, instantiate a
         # _new_ MetadataWranglerOPDSLookup for each, and call
         # its _run_collection_self_tests method.
         for c in _db.query(Collection):
             try:
-                metadata_identifier = c.metadata_identifier
-            except ValueError as e:
+                c.metadata_identifier
+            except ValueError:
                 continue
 
             lookup = lookup_class.from_config(_db, c)
@@ -212,10 +209,9 @@ class MetadataWranglerOPDSLookup(SimplifiedOPDSLookup, HasSelfTests):
         """
         if not self.collection:
             return
-        metadata_identifier = None
         try:
-            metadata_identifier = self.collection.metadata_identifier
-        except ValueError as e:
+            self.collection.metadata_identifier
+        except ValueError:
             # This collection has no metadata identifier. It's
             # probably a "Manual intervention" collection. It cannot
             # interact with the metadata wrangler and there's no need
@@ -838,7 +834,7 @@ class OPDSImporter(object):
                     pools[key] = pool
                 if work:
                     works[key] = work
-            except Exception as e:
+            except Exception:
                 identifier, ignore = Identifier.parse_urn(self._db, key)
                 data_source = self.data_source
                 failure = CoverageFailure(
@@ -1009,7 +1005,6 @@ class OPDSImporter(object):
 
         # Use one loop for both, since the id will be the same for both dictionaries.
         metadata = {}
-        circulationdata = {}
         for id, m_data_dict in list(fp_metadata.items()):
             xml_data_dict = xml_data_meta.get(id, {})
 
@@ -1140,7 +1135,6 @@ class OPDSImporter(object):
         information that allows a patron to actually get a book
         that's not open access.
         """
-        pass
 
     @classmethod
     def combine(self, d1, d2):
@@ -1289,7 +1283,7 @@ class OPDSImporter(object):
         try:
             kwargs_meta = cls._data_detail_for_feedparser_entry(entry, data_source)
             return identifier, kwargs_meta, None
-        except Exception as e:
+        except Exception:
             _db = Session.object_session(data_source)
             identifier_obj, ignore = Identifier.parse_urn(_db, identifier)
             failure = CoverageFailure(
@@ -1487,7 +1481,7 @@ class OPDSImporter(object):
         urn = message.urn
         try:
             identifier, ignore = Identifier.parse_urn(_db, urn)
-        except ValueError as e:
+        except ValueError:
             identifier = None
 
         if not identifier:
@@ -1543,7 +1537,7 @@ class OPDSImporter(object):
             )
             return identifier, data, None
 
-        except Exception as e:
+        except Exception:
             _db = Session.object_session(data_source)
             identifier_obj, ignore = Identifier.parse_urn(_db, identifier)
             failure = CoverageFailure(
@@ -1614,7 +1608,7 @@ class OPDSImporter(object):
             default = datetime_utc(utc_now().year, 1, 1)
             try:
                 data["published"] = dateutil.parser.parse(date_string, default=default)
-            except Exception as e:
+            except Exception:
                 # This entry had an issued tag, but it was in a format we couldn't parse.
                 pass
 
@@ -1722,7 +1716,7 @@ class OPDSImporter(object):
         weight = attr.get("{http://schema.org/}ratingValue", default_weight)
         try:
             weight = int(weight)
-        except ValueError as e:
+        except ValueError:
             weight = default_weight
 
         return SubjectData(type=subject_type, identifier=term, name=name, weight=weight)

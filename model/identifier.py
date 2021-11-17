@@ -304,7 +304,7 @@ class Identifier(Base, IdentifierConstants):
                     identifier_details[urn] = (type, identifier)
                 else:
                     failures.append(urn)
-            except ValueError as e:
+            except ValueError:
                 failures.append(urn)
 
         identifiers_by_urn = dict()
@@ -666,7 +666,6 @@ class Identifier(Base, IdentifierConstants):
         """
         _db = Session.object_session(self)
         # Turn the subject type and identifier into a Subject.
-        classifications = []
         subject, is_new = Subject.lookup(
             _db,
             subject_type,
@@ -695,7 +694,7 @@ class Identifier(Base, IdentifierConstants):
                 subject=subject,
                 data_source=data_source,
             )
-        except MultipleResultsFound as e:
+        except MultipleResultsFound:
             # TODO: This is a hack.
             all_classifications = _db.query(Classification).filter(
                 Classification.identifier == self,
@@ -874,7 +873,6 @@ class Identifier(Base, IdentifierConstants):
         better to get rid of this hack and create real Works where we
         would be using this method.
         """
-        id = self.urn
         cover_image = None
         description = None
         most_recent_update = None

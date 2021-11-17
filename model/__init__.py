@@ -6,10 +6,10 @@ import warnings
 
 from psycopg2.extensions import adapt as sqlescape
 from psycopg2.extras import NumericRange
-from sqlalchemy import Column, ForeignKey, Integer, Table, create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError, SAWarning
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import compiler, select
 from sqlalchemy.sql.expression import literal_column, table
@@ -17,14 +17,6 @@ from sqlalchemy.sql.expression import literal_column, table
 Base = declarative_base()
 
 from .. import classifier
-from ..util.datetime_helpers import utc_now
-from .constants import (
-    DataSourceConstants,
-    EditionConstants,
-    IdentifierConstants,
-    LinkRelations,
-    MediaTypes,
-)
 
 
 def flush(db):
@@ -478,33 +470,49 @@ def production_session(initialize_data=True):
     return _db
 
 
-from .admin import Admin, AdminRole
-from .cachedfeed import CachedFeed, CachedMARCFile, WillNotGenerateExpensiveFeed
-from .circulationevent import CirculationEvent
-from .classification import Classification, Genre, Subject
-from .collection import (
+from .admin import Admin, AdminRole  # noqa
+from .cachedfeed import CachedFeed, CachedMARCFile, WillNotGenerateExpensiveFeed  # noqa
+from .circulationevent import CirculationEvent  # noqa
+from .classification import Classification, Genre, Subject  # noqa
+from .collection import (  # noqa
     Collection,
     CollectionIdentifier,
     CollectionMissing,
     collections_identifiers,
 )
-from .complaint import Complaint
-from .configuration import (
+from .complaint import Complaint  # noqa
+from .configuration import (  # noqa
     ConfigurationSetting,
     ExternalIntegration,
     ExternalIntegrationLink,
 )
-from .contributor import Contribution, Contributor
-from .coverage import BaseCoverageRecord, CoverageRecord, Timestamp, WorkCoverageRecord
-from .credential import Credential, DelegatedPatronIdentifier, DRMDeviceIdentifier
-from .customlist import CustomList, CustomListEntry
-from .datasource import DataSource
-from .edition import Edition
-from .hasfulltablecache import HasFullTableCache
-from .identifier import Equivalency, Identifier
-from .integrationclient import IntegrationClient
-from .library import Library
-from .licensing import (
+from .constants import (  # noqa
+    DataSourceConstants,
+    EditionConstants,
+    IdentifierConstants,
+    LinkRelations,
+    MediaTypes,
+)
+from .contributor import Contribution, Contributor  # noqa
+from .coverage import (  # noqa
+    BaseCoverageRecord,
+    CoverageRecord,
+    Timestamp,
+    WorkCoverageRecord,
+)
+from .credential import (  # noqa
+    Credential,
+    DelegatedPatronIdentifier,
+    DRMDeviceIdentifier,
+)
+from .customlist import CustomList, CustomListEntry  # noqa
+from .datasource import DataSource  # noqa
+from .edition import Edition  # noqa
+from .hasfulltablecache import HasFullTableCache  # noqa
+from .identifier import Equivalency, Identifier  # noqa
+from .integrationclient import IntegrationClient  # noqa
+from .library import Library  # noqa
+from .licensing import (  # noqa
     DeliveryMechanism,
     License,
     LicensePool,
@@ -512,9 +520,9 @@ from .licensing import (
     PolicyException,
     RightsStatus,
 )
-from .listeners import *
-from .measurement import Measurement
-from .patron import (
+from .listeners import *  # noqa
+from .measurement import Measurement  # noqa
+from .patron import (  # noqa
     Annotation,
     Hold,
     Loan,
@@ -522,5 +530,10 @@ from .patron import (
     Patron,
     PatronProfileStorage,
 )
-from .resource import Hyperlink, Representation, Resource, ResourceTransformation
-from .work import Work, WorkGenre
+from .resource import (  # noqa
+    Hyperlink,
+    Representation,
+    Resource,
+    ResourceTransformation,
+)
+from .work import Work, WorkGenre  # noqa

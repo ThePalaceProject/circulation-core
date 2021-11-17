@@ -326,7 +326,7 @@ class TestConfigurationSetting(DatabaseTest):
         ConfigurationSetting.sitewide(self._db, "a_secret").value = "1"
         ConfigurationSetting.sitewide(self._db, "nonsecret_setting").value = "2"
 
-        integration = self._external_integration("a protocol", "a goal")
+        self._external_integration("a protocol", "a goal")
 
         actual = ConfigurationSetting.explain(self._db, include_secrets=True)
         expect = """Site-wide configuration settings:

@@ -2,7 +2,11 @@ import json
 
 from flask_babel import lazy_gettext as _
 
-from .problem_details import *
+from .problem_details import (
+    INTERNAL_SERVER_ERROR,
+    INVALID_INPUT,
+    UNSUPPORTED_MEDIA_TYPE,
+)
 
 
 class ProfileController(object):
@@ -42,7 +46,7 @@ class ProfileController(object):
             )
         try:
             body = json.dumps(profile_document)
-        except Exception as e:
+        except Exception:
             return INTERNAL_SERVER_ERROR.with_debug(
                 _("Could not convert profile document to JSON: %r.")
                 % (profile_document)
@@ -62,7 +66,7 @@ class ProfileController(object):
             return UNSUPPORTED_MEDIA_TYPE.detailed(_("Expected %s") % self.MEDIA_TYPE)
         try:
             profile_document = json.loads(body)
-        except Exception as e:
+        except Exception:
             return INVALID_INPUT.detailed(
                 _("Submitted profile document was not valid JSON.")
             )

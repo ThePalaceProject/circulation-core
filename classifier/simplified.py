@@ -1,6 +1,6 @@
 from urllib.parse import unquote
 
-from . import *
+from . import *  # noqa
 
 
 class SimplifiedGenreClassifier(Classifier):

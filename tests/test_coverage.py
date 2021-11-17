@@ -4,9 +4,7 @@ import pytest
 
 from ..coverage import (
     BaseCoverageProvider,
-    BibliographicCoverageProvider,
     CatalogCoverageProvider,
-    CollectionCoverageProvider,
     CoverageFailure,
     CoverageProviderProgress,
     IdentifierCoverageProvider,
@@ -27,13 +25,11 @@ from ..metadata_layer import (
     SubjectData,
 )
 from ..model import (
-    Collection,
     CollectionMissing,
     Contributor,
     CoverageRecord,
     DataSource,
     DeliveryMechanism,
-    Edition,
     ExternalIntegration,
     Hyperlink,
     Identifier,
@@ -493,7 +489,7 @@ class TestBaseCoverageProvider(CoverageProviderTest):
 
         # Let's register an identifier so that the method we're testing
         # will be called.
-        needs_coverage = self._identifier()
+        self._identifier()
         progress = provider.run_once(progress)
 
         # The numbers returned from process_batch_and_handle_results
@@ -1092,7 +1088,7 @@ class TestIdentifierCoverageProvider(CoverageProviderTest):
         provider = Mock1(self._db)
 
         # Here's a generic CoverageRecord for an identifier.
-        record1 = CoverageRecord.add_for(self.identifier, provider.data_source)
+        CoverageRecord.add_for(self.identifier, provider.data_source)
 
         # That record doesn't count for purposes of
         # items_that_need_coverage, because the CoverageRecord doesn't
@@ -1924,7 +1920,7 @@ class TestCatalogCoverageProvider(CoverageProviderTest):
         i2 = self._identifier()
         c2.catalog_identifier(i2)
 
-        i3 = self._identifier()
+        self._identifier()
 
         # This Identifier is licensed through the Collection c1, but
         # it's not in the catalog--catalogs are used for different
@@ -1936,7 +1932,6 @@ class TestCatalogCoverageProvider(CoverageProviderTest):
         class Provider(CatalogCoverageProvider):
             SERVICE_NAME = "test"
             DATA_SOURCE_NAME = DataSource.OVERDRIVE
-            pass
 
         provider = Provider(c1)
         assert [i1] == provider.items_that_need_coverage().all()

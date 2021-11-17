@@ -1113,7 +1113,6 @@ class TestCoverResource(DatabaseTest):
         images that are the wrong aspect ratio, or too small.
         """
 
-        ideal_ratio = Identifier.IDEAL_COVER_ASPECT_RATIO
         ideal_height = Identifier.IDEAL_IMAGE_HEIGHT
         ideal_width = Identifier.IDEAL_IMAGE_WIDTH
 

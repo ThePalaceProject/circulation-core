@@ -3,7 +3,6 @@
 
 import logging
 from functools import total_ordering
-from pdb import set_trace
 
 from sqlalchemy import (
     Boolean,
@@ -188,7 +187,6 @@ class CustomList(Base):
 
             # There's no guarantee this Edition _has_ a work, so don't
             # filter by Work when looking for a duplicate.
-            kwargs = dict()
 
         if existing_entries:
             # There is a book equivalent to this one on the list.

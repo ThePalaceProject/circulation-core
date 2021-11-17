@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from enum import Enum
 
 from flask_babel import lazy_gettext as _
-from sqlalchemy import Column, ForeignKey, Index, Integer, Unicode, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Index, Integer, Unicode
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session

@@ -1,5 +1,4 @@
 from ..classifier import Classifier
-from ..lane import Lane
 from ..model import Genre
 from ..opensearch import OpenSearchDocument
 from ..testing import DatabaseTest

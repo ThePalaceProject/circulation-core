@@ -1,4 +1,4 @@
-from . import *
+from . import *  # noqa
 
 
 class BICClassifier(Classifier):

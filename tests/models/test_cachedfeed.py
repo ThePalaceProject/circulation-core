@@ -4,10 +4,8 @@ import datetime
 import pytest
 
 from ...classifier import Classifier
-from ...lane import Facets, Lane, Pagination, WorkList
+from ...lane import Facets, Pagination, WorkList
 from ...model.cachedfeed import CachedFeed
-from ...model.configuration import ConfigurationSetting
-from ...opds import AcquisitionFeed
 from ...testing import DatabaseTest
 from ...util.datetime_helpers import utc_now
 from ...util.flask_util import OPDSFeedResponse
@@ -396,7 +394,6 @@ class TestCachedFeed(DatabaseTest):
         # If the Library associated with the WorkList used in the feed
         # has root lanes, `private` is always set to True, even if we
         # asked for the opposite.
-        from unittest.mock import PropertyMock, patch
 
         from ...model import Library
 

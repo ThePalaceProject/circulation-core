@@ -1,6 +1,5 @@
 import os
 import random
-import shutil
 import stat
 import tempfile
 from io import StringIO
@@ -86,7 +85,7 @@ from ..testing import (
     AlwaysSuccessfulWorkCoverageProvider,
     DatabaseTest,
 )
-from ..util.datetime_helpers import datetime_utc, strptime_utc, to_utc, utc_now
+from ..util.datetime_helpers import datetime_utc, strptime_utc, utc_now
 from ..util.worker_pools import DatabasePool
 
 
@@ -1376,8 +1375,6 @@ class TestDatabaseMigrationScript(DatabaseMigrationScriptTest):
 
         # There are two temporary files in tmp_path, confirming that the test
         # Python files created by the migrations fixture were run.
-        test_dir = os.path.split(__file__)[0]
-        all_files = os.listdir(test_dir)
         test_generated_files = sorted(
             [
                 f.name
@@ -1502,7 +1499,6 @@ class TestDatabaseMigrationInitializationScript(DatabaseMigrationScriptTest):
         assert 7 == script.overall_timestamp.counter
 
         # When forced, the counter can be reset on an existing timestamp.
-        previous_timestamp = script.overall_timestamp.finish
         script.run(["--last-run-date", "20121212", "--last-run-counter", "2", "-f"])
         expected_stamp = strptime_utc("20121212", "%Y%m%d")
         assert expected_stamp == script.overall_timestamp.finish
@@ -2223,8 +2219,6 @@ class MockOPDSImportMonitor(object):
 class MockOPDSImporter(object):
     """Pretend to import titles from an OPDS feed."""
 
-    pass
-
 
 class MockOPDSImportScript(OPDSImportScript):
     """Actually instantiate a monitor that will pretend to do something."""
@@ -2480,7 +2474,6 @@ class TestWhereAreMyBooksScript(DatabaseTest):
         # This work is not presentation-ready.
         work = self._work(with_license_pool=True)
         work.presentation_ready = False
-        script = MockWhereAreMyBooks(self._db)
         self.check_explanation(presentation_ready=0, not_presentation_ready=1)
 
     def test_no_delivery_mechanisms(self):
@@ -2503,7 +2496,6 @@ class TestWhereAreMyBooksScript(DatabaseTest):
         self.check_explanation(not_owned=1)
 
     def test_search_engine(self):
-        output = StringIO()
         search = MockExternalSearchIndex()
         work = self._work(with_license_pool=True)
         work.presentation_ready = True
@@ -3039,34 +3031,22 @@ class TestUpdateCustomListSizeScript(DatabaseTest):
 class TestWorkConsolidationScript(object):
     """TODO"""
 
-    pass
-
 
 class TestWorkPresentationScript(object):
     """TODO"""
-
-    pass
 
 
 class TestWorkClassificationScript(object):
     """TODO"""
 
-    pass
-
 
 class TestWorkOPDSScript(object):
     """TODO"""
-
-    pass
 
 
 class TestCustomListManagementScript(object):
     """TODO"""
 
-    pass
-
 
 class TestNYTBestSellerListsScript(object):
     """TODO"""
-
-    pass

@@ -31,6 +31,9 @@ jobs:
       - name: Run Black
         run: tox -e black
 
+      - name: Run autoflake
+        run: tox -e autoflake
+
   test:
     name: Test
     runs-on: ubuntu-latest

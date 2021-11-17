@@ -1,9 +1,7 @@
 # encoding: utf-8
 import json
-import logging
 import re
 import time
-from collections import defaultdict
 
 import pytest
 from elasticsearch.exceptions import ElasticsearchException
@@ -29,7 +27,6 @@ from ..external_search import (
     CurrentMapping,
     ExternalSearchIndex,
     Filter,
-    Mapping,
     MockExternalSearchIndex,
     MockSearchResult,
     Query,
@@ -40,7 +37,7 @@ from ..external_search import (
     WorkSearchResult,
     mock_search_index,
 )
-from ..lane import Facets, FeaturedFacets, Lane, Pagination, SearchFacets, WorkList
+from ..lane import Facets, FeaturedFacets, Pagination, SearchFacets, WorkList
 from ..metadata_layer import ContributorData, IdentifierData
 from ..model import (
     ConfigurationSetting,
@@ -48,9 +45,7 @@ from ..model import (
     Contributor,
     DataSource,
     Edition,
-    ExternalIntegration,
     Genre,
-    Work,
     WorkCoverageRecord,
     get_one_or_create,
 )
@@ -1367,7 +1362,6 @@ class TestSearchOrder(EndToEndSearchTest):
             for pagination_class in (Pagination, SortKeyPagination):
                 pagination = pagination_class(size=1)
                 to_process = list(reversed(order)) + [[]]
-                results = []
                 pagination = SortKeyPagination(size=1)
                 while to_process:
                     filter = Filter(facets=facets, **filter_kwargs)
@@ -1486,7 +1480,7 @@ class TestAuthorFilter(EndToEndSearchTest):
     # person had an authorship role.
 
     def populate_works(self):
-        _work = self.default_work
+        self.default_work
 
         # Create a number of Contributor objects--some fragmentary--
         # representing the same person.
@@ -3082,7 +3076,7 @@ class TestFilter(DatabaseTest):
     def test_constructor(self):
         # Verify that the Filter constructor sets members with
         # minimal processing.
-        collection = self._default_collection
+        self._default_collection
 
         media = object()
         languages = object()

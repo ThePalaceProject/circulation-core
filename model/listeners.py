@@ -1,7 +1,6 @@
 # encoding: utf-8
 
 import datetime
-from pdb import set_trace
 from threading import RLock
 
 from sqlalchemy import event, text
@@ -9,7 +8,7 @@ from sqlalchemy.orm.base import NO_VALUE
 from sqlalchemy.orm.session import Session
 
 from ..config import Configuration
-from ..util.datetime_helpers import to_utc, utc_now
+from ..util.datetime_helpers import utc_now
 from . import Base
 from .admin import Admin, AdminRole
 from .classification import Genre
@@ -275,7 +274,7 @@ def licensepool_deleted(mapper, connection, target):
     """
     work = target.work
     if work:
-        record = work.external_index_needs_updating()
+        work.external_index_needs_updating()
 
 
 @event.listens_for(LicensePool.collection_id, "set")

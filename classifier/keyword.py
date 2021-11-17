@@ -1,4 +1,4 @@
-from . import *
+from . import *  # noqa
 
 
 def match_kw(*l):
@@ -1210,7 +1210,6 @@ class KeywordBasedClassifier(AgeOrGradeClassifier):
         cls, identifier, name, fiction=None, audience=None, exclude_examples=False
     ):
         matches = Counter()
-        match_against = [name]
         for l in [cls.LEVEL_3_KEYWORDS, cls.LEVEL_2_KEYWORDS, cls.CATCHALL_KEYWORDS]:
             for genre, keywords in list(l.items()):
                 if genre and fiction is not None and genre.is_fiction != fiction:

@@ -13,7 +13,6 @@ from .model import (
     CoverageRecord,
     DataSource,
     Edition,
-    ExternalIntegration,
     Identifier,
     LicensePool,
     PresentationCalculationPolicy,
@@ -21,7 +20,6 @@ from .model import (
     Work,
     WorkCoverageRecord,
     get_one,
-    get_one_or_create,
 )
 from .util.datetime_helpers import utc_now
 from .util.worker_pools import DatabaseJob
@@ -228,7 +226,6 @@ class BaseCoverageProvider(object):
             BaseCoverageRecord.DEFAULT_COUNT_AS_COVERED,
         ]
         start_time = utc_now()
-        timestamp = self.timestamp
 
         # We'll use this TimestampData object to track our progress
         # as we grant coverage to items.
@@ -396,7 +393,6 @@ class BaseCoverageProvider(object):
         # a list ensures that all subsequent code will run on the same items.
         batch = list(batch)
 
-        offset_increment = 0
         results = self.process_batch(batch)
         successes = 0
         transient_failures = 0
@@ -489,7 +485,6 @@ class BaseCoverageProvider(object):
         """Do something special to mark the successful coverage of the
         given item.
         """
-        pass
 
     def should_update(self, coverage_record):
         """Should we do the work to update the given coverage record?"""

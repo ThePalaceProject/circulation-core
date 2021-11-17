@@ -1,7 +1,4 @@
-import json
-
 from ..analytics import Analytics
-from ..config import Configuration, temp_config
 from ..local_analytics_provider import LocalAnalyticsProvider
 from ..mock_analytics_provider import MockAnalyticsProvider
 from ..model import CirculationEvent, ExternalIntegration, Library, create, get_one

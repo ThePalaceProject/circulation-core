@@ -72,7 +72,7 @@ class MirrorUploader(metaclass=ABCMeta):
             integration = ExternalIntegration.for_collection_and_purpose(
                 _db, collection, purpose
             )
-        except CannotLoadConfiguration as e:
+        except CannotLoadConfiguration:
             return None
         return cls.implementation(integration)
 

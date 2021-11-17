@@ -23,7 +23,6 @@ from ..config import Configuration
 from ..entrypoint import EntryPoint
 from ..facets import FacetConstants
 from . import Base, get_one
-from .circulationevent import CirculationEvent
 from .edition import Edition
 from .hasfulltablecache import HasFullTableCache
 from .licensing import LicensePool
@@ -295,7 +294,7 @@ class Library(Base, HasFullTableCache):
 
         try:
             value = setting.json_value
-        except ValueError as e:
+        except ValueError:
             logging.error(
                 "Invalid list of enabled facets for %s: %s", group_name, setting.value
             )

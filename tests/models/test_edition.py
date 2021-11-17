@@ -1,5 +1,4 @@
 # encoding: utf-8
-import datetime
 
 from ...model import PresentationCalculationPolicy, get_one_or_create
 from ...model.constants import MediaTypes
@@ -32,11 +31,10 @@ class TestEdition(DatabaseTest):
 
     def test_license_pools(self):
         # Here are two collections that provide access to the same book.
-        c1 = self._collection()
-        c2 = self._collection()
+        other_collection = self._collection()
 
         edition, lp1 = self._edition(with_license_pool=True)
-        lp2 = self._licensepool(edition=edition, collection=c2)
+        lp2 = self._licensepool(edition=edition, collection=other_collection)
 
         # Two LicensePools for the same work.
         assert lp1.identifier == lp2.identifier
@@ -106,10 +104,10 @@ class TestEdition(DatabaseTest):
         )
 
         # One of them has coverage from OCLC Classify
-        c1 = self._coverage_record(g1, oclc)
+        self._coverage_record(g1, oclc)
 
         # The other has coverage from a specific operation on OCLC Classify
-        c2 = self._coverage_record(g2, oclc, "some operation")
+        self._coverage_record(g2, oclc, "some operation")
 
         # Here's a web record, just sitting there.
         w, ignore = Edition.for_foreign_id(

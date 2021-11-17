@@ -2,7 +2,6 @@ import contextlib
 import datetime
 import json
 import logging
-import os
 import re
 import time
 from collections import defaultdict
@@ -10,7 +9,7 @@ from collections import defaultdict
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ElasticsearchException, RequestError
 from elasticsearch.helpers import bulk as elasticsearch_bulk
-from elasticsearch_dsl import SF, Index, MultiSearch, Search
+from elasticsearch_dsl import SF, MultiSearch, Search
 from elasticsearch_dsl.query import (
     Bool,
     DisMax,
@@ -24,7 +23,7 @@ from elasticsearch_dsl.query import (
     Nested,
 )
 from elasticsearch_dsl.query import Query as BaseQuery
-from elasticsearch_dsl.query import SimpleQueryString, Term, Terms
+from elasticsearch_dsl.query import Term, Terms
 from flask_babel import lazy_gettext as _
 from spellchecker import SpellChecker
 
@@ -34,7 +33,7 @@ from .classifier import (
     GradeLevelClassifier,
     KeywordBasedClassifier,
 )
-from .config import CannotLoadConfiguration, Configuration
+from .config import CannotLoadConfiguration
 from .coverage import CoverageFailure, WorkPresentationProvider
 from .facets import FacetConstants
 from .lane import Pagination
@@ -52,9 +51,8 @@ from .model import (
     WorkCoverageRecord,
     numericrange_to_tuple,
 )
-from .monitor import WorkSweepMonitor
 from .problem_details import INVALID_INPUT
-from .selftest import HasSelfTests, SelfTestResult
+from .selftest import HasSelfTests
 from .util.datetime_helpers import from_timestamp
 from .util.personal_names import display_name_to_sort_name
 from .util.problem_detail import ProblemDetail
@@ -630,7 +628,6 @@ class ExternalSearchIndex(HasSelfTests):
             if works_with_error:
                 work = works_with_error[0]
 
-            exception = error.get("exception", None)
             error_message = error.get("error", None)
             if not error_message:
                 error_message = error.get("index", {}).get("error", None)
@@ -2832,13 +2829,11 @@ class Filter(SearchBase):
         clauses = []
 
         if upper is not None:
-            lower_does_not_exist = does_not_exist("target_age.lower")
             lower_in_range = self._match_range("target_age.lower", "lte", upper)
             lower_match = or_does_not_exist(lower_in_range, "target_age.lower")
             clauses.append(lower_match)
 
         if lower is not None:
-            upper_does_not_exist = does_not_exist("target_age.upper")
             upper_in_range = self._match_range("target_age.upper", "gte", lower)
             upper_match = or_does_not_exist(upper_in_range, "target_age.upper")
             clauses.append(upper_match)
@@ -2973,7 +2968,7 @@ class SortKeyPagination(Pagination):
         if pagination_key:
             try:
                 pagination_key = json.loads(pagination_key)
-            except ValueError as e:
+            except ValueError:
                 return INVALID_INPUT.detailed(
                     _("Invalid page key: %(key)s", key=pagination_key)
                 )

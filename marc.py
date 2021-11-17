@@ -2,17 +2,15 @@ import re
 from io import BytesIO
 
 from flask_babel import lazy_gettext as _
-from pymarc import Field, MARCWriter, Record
+from pymarc import Field, Record
 
 from .classifier import Classifier
-from .config import CannotLoadConfiguration, Configuration
+from .config import CannotLoadConfiguration
 from .external_search import ExternalSearchIndex, SortKeyPagination
 from .lane import BaseFacets, Lane
 from .mirror import MirrorUploader
 from .model import (
     CachedMARCFile,
-    Collection,
-    ConfigurationSetting,
     DeliveryMechanism,
     Edition,
     ExternalIntegration,
@@ -20,10 +18,8 @@ from .model import (
     Representation,
     Session,
     Work,
-    get_one,
     get_one_or_create,
 )
-from .s3 import S3Uploader
 from .util import LanguageCodes
 from .util.datetime_helpers import utc_now
 
@@ -212,7 +208,6 @@ class Annotator(object):
 
         TODO: Use canonical names from LoC.
         """
-        contibutor_fields = []
 
         # If there's one author, use the 100 field.
         if edition.sort_author and len(edition.contributions) == 1:
@@ -428,7 +423,6 @@ class Annotator(object):
 
     @classmethod
     def add_formats(cls, record, pool):
-        formats = []
         for lpdm in pool.delivery_mechanisms:
             format = None
             dm = lpdm.delivery_mechanism
@@ -657,8 +651,6 @@ class MARCExporter(object):
 
         edition = pool.presentation_edition
         identifier = pool.identifier
-
-        _db = Session.object_session(work)
 
         record = None
         existing_record = getattr(work, annotator.marc_cache_field)

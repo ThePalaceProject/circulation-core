@@ -2,9 +2,8 @@
 import csv
 import os
 import re
-import string
 
-from . import *
+from . import *  # noqa
 from .keyword import KeywordBasedClassifier
 
 

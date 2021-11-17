@@ -7,7 +7,6 @@ from urllib.parse import quote_plus
 
 import elasticsearch
 from flask_babel import lazy_gettext as _
-from psycopg2.extras import NumericRange
 from sqlalchemy import (
     Boolean,
     Column,
@@ -17,11 +16,9 @@ from sqlalchemy import (
     Unicode,
     UniqueConstraint,
     and_,
-    case,
     event,
     not_,
     or_,
-    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, INT4RANGE, JSON
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -32,14 +29,12 @@ from sqlalchemy.orm import (
     contains_eager,
     defer,
     joinedload,
-    lazyload,
     relationship,
 )
 from sqlalchemy.sql import select
-from sqlalchemy.sql.expression import Select, literal
+from sqlalchemy.sql.expression import Select
 
-from . import classifier
-from .classifier import Classifier, GenreData
+from .classifier import Classifier
 from .config import Configuration
 from .entrypoint import EntryPoint, EverythingEntryPoint
 from .facets import FacetConstants
@@ -50,25 +45,21 @@ from .model import (
     CustomList,
     CustomListEntry,
     DataSource,
-    DeliveryMechanism,
     Edition,
     Genre,
     Library,
     LicensePool,
-    LicensePoolDeliveryMechanism,
     Session,
     Work,
     WorkGenre,
     directly_modified,
-    get_one,
     get_one_or_create,
-    numericrange_to_tuple,
     site_configuration_has_changed,
     tuple_to_numericrange,
 )
 from .model.constants import EditionConstants
 from .problem_details import *
-from .util import LanguageCodes, fast_query_count
+from .util import LanguageCodes
 from .util.accept_language import parse_accept_language
 from .util.datetime_helpers import utc_now
 from .util.opds_writer import OPDSFeed
@@ -332,7 +323,7 @@ class FacetsWithEntryPoint(BaseFacets):
 
         try:
             value = int(value)
-        except ValueError as e:
+        except ValueError:
             value = None
 
         # At the moment, the only acceptable value that can be set
@@ -607,7 +598,6 @@ class Facets(FacetsWithEntryPoint):
             for facet_type in facet_types:
                 yield self.facets_enabled_at_init.get(facet_type, [])
         else:
-            library = self.library
             for group_name in (
                 Facets.ORDER_FACET_GROUP_NAME,
                 Facets.AVAILABILITY_FACET_GROUP_NAME,
@@ -1031,7 +1021,7 @@ class SearchFacets(Facets):
         if min_score is not None:
             try:
                 min_score = int(min_score)
-            except ValueError as e:
+            except ValueError:
                 min_score = None
         if min_score is not None:
             extra["min_score"] = min_score
@@ -1809,7 +1799,7 @@ class WorkList(object):
             that generates such a list when executed.
 
         """
-        from .external_search import ExternalSearchIndex, Filter
+        from .external_search import ExternalSearchIndex
 
         search_engine = search_engine or ExternalSearchIndex.load(_db)
         filter = self.filter(_db, facets)
@@ -2008,11 +1998,6 @@ class WorkList(object):
 
         search_engine = search_engine or ExternalSearchIndex.load(_db)
 
-        if isinstance(self, Lane):
-            parent_lane = self
-        else:
-            parent_lane = None
-
         queryable_lane_set = set(queryable_lanes)
         works_and_lanes = list(
             self._featured_works_with_lanes(
@@ -2180,8 +2165,6 @@ class TopLevelWorkList(HierarchyWorkList):
     """A special WorkList representing the top-level view of
     a library's collection.
     """
-
-    pass
 
 
 class DatabaseBackedWorkList(WorkList):
@@ -3094,10 +3077,6 @@ class Lane(Base, DatabaseBackedWorkList, HierarchyWorkList):
             works each child of this WorkList may contribute.
         :param facets: A FeaturedFacets object.
         """
-        clauses = []
-        library = self.get_library(_db)
-        target_size = library.featured_lane_size
-
         if self.include_self_in_grouped_feed:
             relevant_lanes = [self]
         else:

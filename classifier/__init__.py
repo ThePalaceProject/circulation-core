@@ -12,16 +12,12 @@
 # SQL to find commonly used classifications not assigned to a genre
 # select count(identifiers.id) as c, subjects.type, substr(subjects.identifier, 0, 20) as i, substr(subjects.name, 0, 20) as n from workidentifiers join classifications on workidentifiers.id=classifications.work_identifier_id join subjects on classifications.subject_id=subjects.id where subjects.genre_id is null and subjects.fiction is null group by subjects.type, i, n order by c desc;
 
-import json
 import logging
 import os
-import pkgutil
 import re
-from collections import Counter, defaultdict
-from urllib.parse import urlparse
+from collections import Counter
 
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql.expression import and_
 
 base_dir = os.path.split(__file__)[0]
 resource_dir = os.path.join(base_dir, "..", "resources")
@@ -1392,7 +1388,6 @@ class WorkClassifier(object):
         research_weight = w.get(Classifier.AUDIENCE_RESEARCH, 0)
 
         total_adult_weight = adult_weight + adults_only_weight
-        total_weight = sum(w.values())
 
         audience = default_audience
 
@@ -1623,18 +1618,18 @@ Classifier.classifiers[Classifier.FREEFORM_AUDIENCE] = FreeformAudienceClassifie
 Classifier.classifiers[Classifier.AXIS_360_AUDIENCE] = AgeOrGradeClassifier
 
 # Finally, import classifiers described in submodules.
-from .age import AgeClassifier, GradeLevelClassifier, InterestLevelClassifier
-from .bic import BICClassifier
-from .bisac import BISACClassifier
-from .ddc import DeweyDecimalClassifier
-from .gutenberg import GutenbergBookshelfClassifier
-from .keyword import (
+from .age import AgeClassifier, GradeLevelClassifier, InterestLevelClassifier  # noqa
+from .bic import BICClassifier  # noqa
+from .bisac import BISACClassifier  # noqa
+from .ddc import DeweyDecimalClassifier  # noqa
+from .gutenberg import GutenbergBookshelfClassifier  # noqa
+from .keyword import (  # noqa
     Eg,
     FASTClassifier,
     KeywordBasedClassifier,
     LCSHClassifier,
     TAGClassifier,
 )
-from .lcc import LCCClassifier
-from .overdrive import OverdriveClassifier
-from .simplified import SimplifiedFictionClassifier, SimplifiedGenreClassifier
+from .lcc import LCCClassifier  # noqa
+from .overdrive import OverdriveClassifier  # noqa
+from .simplified import SimplifiedFictionClassifier, SimplifiedGenreClassifier  # noqa

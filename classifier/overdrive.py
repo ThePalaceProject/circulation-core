@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from . import *
+from . import *  # noqa
 
 
 class OverdriveClassifier(Classifier):

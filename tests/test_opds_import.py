@@ -1,20 +1,17 @@
 import datetime
 import os
-import pkgutil
 import random
 from io import StringIO
 from urllib.parse import quote
 
-import feedparser
 import pytest
 from lxml import etree
 from psycopg2.extras import NumericRange
 
-from ..config import CannotLoadConfiguration, IntegrationException
+from ..config import IntegrationException
 from ..coverage import CoverageFailure
-from ..metadata_layer import CirculationData, LinkData, Metadata, TimestampData
+from ..metadata_layer import CirculationData, LinkData, Metadata
 from ..model import (
-    Collection,
     Contributor,
     CoverageRecord,
     DataSource,
@@ -29,7 +26,6 @@ from ..model import (
     RightsStatus,
     Subject,
     Work,
-    WorkCoverageRecord,
 )
 from ..model.configuration import ExternalIntegrationLink
 from ..opds_import import (
@@ -38,7 +34,6 @@ from ..opds_import import (
     OPDSImporter,
     OPDSImportMonitor,
     OPDSXMLParser,
-    SimplifiedOPDSLookup,
 )
 from ..s3 import MockS3Uploader, S3Uploader, S3UploaderConfiguration
 from ..selftest import SelfTestResult
@@ -193,7 +188,7 @@ class TestMetadataWranglerOPDSLookup(OPDSTest):
 
         # Ensure there are two collections: one with a metadata
         # identifier and one without.
-        no_unique_id = self._default_collection
+        self._default_collection
         with_unique_id = self.collection
         with_unique_id.external_account_id = "unique id"
 
@@ -367,7 +362,7 @@ class TestMetadataWranglerOPDSLookup(OPDSTest):
         response = mock_response(
             url, auth, 200, self.sample_opds("metadata_wrangler_overdrive.opds")
         )
-        results = m(test_result, response)
+        m(test_result, response)
         assert [
             "Request URL: %s" % url,
             "Request authorization: %s" % auth,
@@ -530,7 +525,6 @@ class TestOPDSImporter(OPDSImporterTest):
         book_2 = metadata.get("urn:isbn:9781468316438")
         assert book_2 != None
         # Verify if id was add in the end of identifier
-        book_2_identifiers = book_2.identifiers
         found = False
         for entry in book_2.identifiers:
             if entry.identifier == "https://root.uri/2":
@@ -541,7 +535,6 @@ class TestOPDSImporter(OPDSImporterTest):
         book_3 = metadata.get("urn:isbn:9781683351993")
         assert book_2 != None
         # Verify if id was add in the end of identifier
-        book_3_identifiers = book_3.identifiers
         expected_identifier = [
             "9781683351993",
             "https://root.uri/3",
@@ -1566,7 +1559,6 @@ class TestOPDSImporter(OPDSImporterTest):
 
         # The work's presentation edition has been chosen.
         work.calculate_presentation()
-        op = WorkCoverageRecord.CHOOSE_EDITION_OPERATION
 
         # But we're about to find out a new title for the book.
         i = edition.primary_identifier
@@ -2221,8 +2213,6 @@ class TestMirroring(OPDSImporterTest):
         # If we fetch the feed again, and the entries have been updated since the
         # cutoff, but the content of the open access links hasn't changed, we won't mirror
         # them again.
-        cutoff = datetime_utc(2013, 1, 2, 16, 56, 40)
-
         http.queue_response(
             epub10441["url"], 304, media_type=Representation.EPUB_MEDIA_TYPE
         )

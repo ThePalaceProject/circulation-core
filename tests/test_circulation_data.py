@@ -5,25 +5,20 @@ import pytest
 
 from ..metadata_layer import (
     CirculationData,
-    ContributorData,
     FormatData,
     IdentifierData,
     LicenseData,
     LinkData,
     Metadata,
     ReplacementPolicy,
-    SubjectData,
 )
 from ..model import (
-    Collection,
     DataSource,
     DeliveryMechanism,
     Hyperlink,
     Identifier,
-    License,
     Representation,
     RightsStatus,
-    Subject,
 )
 from ..model.configuration import ExternalIntegrationLink
 from ..s3 import MockS3Uploader
@@ -75,8 +70,6 @@ class TestCirculationData(DatabaseTest):
         # Check that we didn't put something in the CirculationData that
         # will prevent it from being copied. (e.g., self.log)
 
-        subject = SubjectData(Subject.TAG, "subject")
-        contributor = ContributorData()
         identifier = IdentifierData(Identifier.GUTENBERG_ID, "1")
         link = LinkData(Hyperlink.OPEN_ACCESS_DOWNLOAD, "example.epub")
         format = FormatData(Representation.EPUB_MEDIA_TYPE, DeliveryMechanism.NO_DRM)

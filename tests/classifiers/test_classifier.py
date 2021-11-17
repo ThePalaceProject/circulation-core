@@ -24,7 +24,7 @@ from ...classifier.keyword import FASTClassifier as FAST
 from ...classifier.keyword import LCSHClassifier as LCSH
 from ...classifier.lcc import LCCClassifier as LCC
 from ...classifier.simplified import SimplifiedGenreClassifier
-from ...model import Classification, DataSource, Genre, Subject
+from ...model import DataSource, Genre, Subject
 from ...testing import DatabaseTest
 
 genres = dict()
@@ -614,7 +614,6 @@ class TestWorkClassifier(DatabaseTest):
         # This book will be not classified as a comic book, because
         # the "comic books" classification does not come from its
         # license source.
-        source = self.work.license_pools[0].data_source
         oclc = DataSource.lookup(self._db, DataSource.OCLC)
         self.identifier.classify(oclc, Subject.TAG, "Comic Books", weight=100)
         self.classifier.add(self.identifier.classifications[0])
@@ -684,7 +683,6 @@ class TestWorkClassifier(DatabaseTest):
         assert lower[5] == upper[8]
 
         # And this affects the target age we choose.
-        a = self.classifier.target_age(Classifier.AUDIENCE_CHILDREN)
         assert (5, 8) == self.classifier.target_age(Classifier.AUDIENCE_CHILDREN)
 
     def test_target_age_errs_towards_wider_span(self):
@@ -733,7 +731,6 @@ class TestWorkClassifier(DatabaseTest):
         historical_romance = self._genre(classifier.Historical_Romance)
         romance = self._genre(classifier.Romance)
         romantic_suspense = self._genre(classifier.Romantic_Suspense)
-        nonfiction_genre = self._genre(classifier.History)
 
         self.classifier.genre_weights[romance] = 100
 

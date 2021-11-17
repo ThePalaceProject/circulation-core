@@ -1,14 +1,9 @@
-from ... import classifier
-from ...classifier import *
+from ...classifier import Classifier
 from ...classifier.lcc import LCCClassifier as LCC
 
 
 class TestLCC(object):
     def test_name_for(self):
-
-        child = Classifier.AUDIENCE_CHILDREN
-        adult = Classifier.AUDIENCE_ADULT
-
         assert "LANGUAGE AND LITERATURE" == LCC.name_for("P")
         assert "English literature" == LCC.name_for("PR")
         assert "Fiction and juvenile belles lettres" == LCC.name_for("PZ")
@@ -18,8 +13,6 @@ class TestLCC(object):
 
     def test_audience(self):
         child = Classifier.AUDIENCE_CHILDREN
-        adult = Classifier.AUDIENCE_ADULT
-        young_adult = Classifier.AUDIENCE_YOUNG_ADULT
 
         def aud(identifier):
             return LCC.audience(LCC.scrub_identifier(identifier), None)

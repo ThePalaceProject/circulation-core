@@ -133,7 +133,6 @@ class Annotator(object):
             # available to people using this application.
             avail = active_license_pool.availability_time
             if avail:
-                now = utc_now()
                 today = datetime.date.today()
                 if isinstance(avail, datetime.datetime):
                     avail = avail.date()
@@ -166,7 +165,6 @@ class Annotator(object):
         """Make any custom modifications necessary to integrate this
         OPDS feed into the application's workflow.
         """
-        pass
 
     @classmethod
     def group_uri(cls, work, license_pool, identifier):
@@ -204,7 +202,6 @@ class Annotator(object):
         thumbnails = []
         full = []
         if work:
-            _db = Session.object_session(work)
             if work.cover_thumbnail_url:
                 thumbnails = [cdnify(work.cover_thumbnail_url)]
 
@@ -1298,7 +1295,7 @@ class AcquisitionFeed(OPDSFeed):
                 force_create,
                 use_cache,
             )
-        except UnfulfillableWork as e:
+        except UnfulfillableWork:
             logging.info(
                 "Work %r is not fulfillable, refusing to create an <entry>.",
                 work,
@@ -1382,15 +1379,11 @@ class AcquisitionFeed(OPDSFeed):
             edition = work.presentation_edition
 
         # Find the .epub link
-        epub_href = None
-        p = None
 
         links = []
-        cover_quality = 0
         qualities = []
         if work:
             qualities.append(("Work quality", work.quality))
-        full_url = None
 
         thumbnail_urls, full_urls = self.annotator.cover_links(work)
         for rel, urls in (
@@ -1741,8 +1734,6 @@ class AcquisitionFeed(OPDSFeed):
         # Generate a list of licensing tags. These should be inserted
         # into a <link> tag.
         tags = []
-        availability_tag_name = None
-        suppress_since = False
         status = None
         since = None
         until = None
@@ -1909,7 +1900,7 @@ class LookupAcquisitionFeed(AcquisitionFeed):
             edition = work.presentation_edition
         try:
             return self._create_entry(work, active_licensepool, edition, identifier)
-        except UnfulfillableWork as e:
+        except UnfulfillableWork:
             logging.info(
                 "Work %r is not fulfillable, refusing to create an <entry>.", work
             )

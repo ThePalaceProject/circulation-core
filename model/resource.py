@@ -832,7 +832,6 @@ class Representation(Base, MediaTypes):
                 # An optional function passed to raise errors if the
                 # post response isn't worth caching.
                 response_reviewer((status_code, headers, content))
-            exception = None
             media_type = cls._best_media_type(url, headers, presumed_media_type)
             if isinstance(content, str):
                 content = content.encode("utf8")
@@ -1015,7 +1014,7 @@ class Representation(Base, MediaTypes):
             try:
                 content = self.content.decode(encoding)
                 break
-            except UnicodeDecodeError as e:
+            except UnicodeDecodeError:
                 pass
         return content
 
@@ -1421,13 +1420,13 @@ class Representation(Base, MediaTypes):
 
         try:
             image.thumbnail(*args)
-        except IOError as e:
+        except IOError:
             # I'm not sure why, but sometimes just trying
             # it again works.
             original_exception = traceback.format_exc()
             try:
                 image.thumbnail(*args)
-            except IOError as e:
+            except IOError:
                 self.scale_exception = original_exception
                 self.scaled_at = None
                 return self, False
@@ -1439,7 +1438,7 @@ class Representation(Base, MediaTypes):
             image = image.convert("RGB")
         try:
             image.save(output, pil_format)
-        except Exception as e:
+        except Exception:
             self.scale_exception = traceback.format_exc()
             self.scaled_at = None
             # This most likely indicates a problem during the fetch phase,

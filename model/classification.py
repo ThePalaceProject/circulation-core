@@ -196,7 +196,6 @@ class Subject(Base):
     @classmethod
     def lookup(cls, _db, type, identifier, name, autocreate=True):
         """Turn a subject type and identifier into a Subject."""
-        classifier = Classifier.lookup(type)
         if not type:
             raise ValueError("Cannot look up Subject with no type.")
         if not identifier and not name:

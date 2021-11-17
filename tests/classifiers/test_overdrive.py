@@ -1,5 +1,5 @@
 # encoding: utf-8
-from ...classifier import *
+from ...classifier import Classifier
 from ...classifier.overdrive import OverdriveClassifier as Overdrive
 
 

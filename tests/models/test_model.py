@@ -1,18 +1,13 @@
 # encoding: utf-8
-import datetime
 
 import pytest
 from psycopg2.extras import NumericRange
 from sqlalchemy import not_
 from sqlalchemy.orm.exc import MultipleResultsFound
 
-from ... import classifier
 from ...config import Configuration
-from ...external_search import mock_search_index
 from ...model import (
-    DataSource,
     Edition,
-    Genre,
     SessionManager,
     Timestamp,
     get_one,

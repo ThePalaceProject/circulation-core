@@ -308,7 +308,7 @@ class TestMeasurement(DatabaseTest):
         )
 
         # Now it's just so-so.
-        popularity = identifier.add_measurement(self.source, Measurement.POPULARITY, 59)
+        identifier.add_measurement(self.source, Measurement.POPULARITY, 59)
 
         # This measurement is irrelevant because "Test Data Source"
         # doesn't have a mapping from number of editions to a

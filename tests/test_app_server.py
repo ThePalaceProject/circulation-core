@@ -76,7 +76,6 @@ class TestURNLookupHandler(DatabaseTest):
         in the feed.
         """
         [obj] = self.handler.precomposed_entries
-        expect = OPDSMessage(urn, code, message)
         assert isinstance(obj, OPDSMessage)
         assert urn == obj.urn
         assert code == obj.status_code

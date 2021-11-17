@@ -7,15 +7,12 @@ model. Doing a third-party integration should be as simple as putting
 the information into this format.
 """
 import csv
-import datetime
 import logging
 import re
 from collections import defaultdict
 
 from dateutil.parser import parse
 from pymarc import MARCReader
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import and_, or_
 
@@ -30,7 +27,6 @@ from .model import (
     DataSource,
     DeliveryMechanism,
     Edition,
-    Equivalency,
     Hyperlink,
     Identifier,
     License,
@@ -43,7 +39,6 @@ from .model import (
     RightsStatus,
     Subject,
     Timestamp,
-    Work,
     get_one,
     get_one_or_create,
 )
@@ -1720,7 +1715,6 @@ class Metadata(MetaToModelUtility):
             ):
                 continue
             contributor.find_sort_name(_db, self.identifiers, metadata_client)
-            confidence = 0
 
             base = (
                 _db.query(Edition)
@@ -2473,7 +2467,6 @@ class CSVMetadataImporter(object):
 
     def _date_field(self, row, field_name):
         """Attempt to parse a field as a date."""
-        date = None
         value = self._field(row, field_name)
         if value:
             try:

@@ -1,8 +1,6 @@
 import json
 import logging
-import os
 import socket
-from io import StringIO
 
 from boto3.session import Session as AwsSession
 from flask_babel import lazy_gettext as _
@@ -227,7 +225,7 @@ class Loggly(Logger):
             )
         try:
             url = cls._interpolate_loggly_url(url, token)
-        except (TypeError, KeyError) as e:
+        except (TypeError, KeyError):
             raise CannotLoadConfiguration(
                 "Cannot interpolate token %s into loggly URL %s"
                 % (

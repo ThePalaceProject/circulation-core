@@ -6,8 +6,7 @@ import random
 import pytest
 from elasticsearch.exceptions import ElasticsearchException
 from mock import MagicMock, call
-from sqlalchemy import and_, func, text
-from sqlalchemy.sql.elements import Case
+from sqlalchemy import and_, text
 
 from ..classifier import Classifier
 from ..config import Configuration
@@ -39,17 +38,13 @@ from ..lane import (
 )
 from ..model import (
     CachedFeed,
-    CustomListEntry,
     DataSource,
     Edition,
     Genre,
-    Identifier,
     Library,
     LicensePool,
-    SessionManager,
     Work,
     WorkGenre,
-    dump_query,
     get_one_or_create,
     tuple_to_numericrange,
 )
@@ -265,7 +260,6 @@ class TestFacetsWithEntryPoint(DatabaseTest):
         # be passing this in to load_entrypoint every time.
         entrypoints = [audio, ebooks]
 
-        worklist = object()
         m = FacetsWithEntryPoint.load_entrypoint
 
         # This request does not ask for any particular entrypoint, and
@@ -2128,7 +2122,6 @@ class TestWorkList(DatabaseTest):
     def test_groups(self):
         w1 = MockWork(1)
         w2 = MockWork(2)
-        w3 = MockWork(3)
 
         class MockWorkList(object):
             def __init__(self, works):
@@ -3423,7 +3416,7 @@ class TestLane(DatabaseTest):
         lane = self._lane()
         child_lane = self._lane(parent=lane)
         grandchild_lane = self._lane(parent=child_lane)
-        unrelated = self._lane()
+        self._lane()  # Unrelated lane
         worklist.sublanes = [child_lane]
 
         # A WorkList has no parentage.
@@ -3598,7 +3591,7 @@ class TestLane(DatabaseTest):
         # has *two* sets of restrictions: a book must be on both
         # the staff picks list *and* the best sellers list.
         staff_picks_lane.inherit_parent_restrictions = True
-        x = staff_picks_lane.inherited_values("customlists")
+        staff_picks_lane.inherited_values("customlists")
         assert sorted([[staff_picks], [best_sellers]]) == sorted(
             staff_picks_lane.inherited_values("customlists")
         )
@@ -4212,7 +4205,6 @@ class TestWorkListGroupsEndToEnd(EndToEndSearchTest):
         # There are no audiobooks in the system, so passing in a
         # FeaturedFacets scoped to the AudiobooksEntryPoint excludes everything.
         facets = FeaturedFacets(0, entrypoint=AudiobooksEntryPoint)
-        _db = self._db
         assert [] == list(fiction.groups(self._db, facets=facets))
 
         # Here's an entry point that applies a language filter

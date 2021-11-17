@@ -1,10 +1,7 @@
 # encoding: utf-8
-import csv
 import logging
-import os
 from collections import defaultdict
 
-from dateutil.parser import parse
 from sqlalchemy import or_
 from sqlalchemy.orm.session import Session
 
@@ -19,11 +16,9 @@ from .model import (
     Identifier,
     Subject,
     Work,
-    get_one,
     get_one_or_create,
 )
 from .opds_import import SimplifiedOPDSLookup
-from .util import LanguageCodes
 from .util.datetime_helpers import utc_now
 
 
@@ -84,7 +79,7 @@ class CustomListFromCSV(CSVMetadataImporter):
         # Turn the rows of the CSV file into a sequence of Metadata
         # objects, then turn each Metadata into a CustomListEntry object.
         for metadata in self.to_metadata(dictreader):
-            entry = self.metadata_to_list_entry(custom_list, data_source, now, metadata)
+            self.metadata_to_list_entry(custom_list, data_source, now, metadata)
 
     def metadata_to_list_entry(self, custom_list, data_source, now, metadata):
         """Convert a Metadata object to a CustomListEntry."""
@@ -234,7 +229,7 @@ class TitleFromExternalList(object):
         # ID if possible.
         try:
             edition, is_new = self.metadata.edition(_db)
-        except ValueError as e:
+        except ValueError:
             self.log.info("Ignoring %s, no corresponding edition.", self.metadata.title)
             return None
         if overwrite_old_data:

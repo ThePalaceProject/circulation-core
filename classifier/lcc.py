@@ -1,4 +1,6 @@
-from . import *
+import json
+
+from . import *  # noqa
 
 
 class LCCClassifier(Classifier):

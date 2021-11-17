@@ -36,7 +36,6 @@ class TestAnnotation(DatabaseTest):
         assert annotation.timestamp > yesterday
 
     def test_patron_annotations_are_descending(self):
-        pool1 = self._licensepool(None)
         pool2 = self._licensepool(None)
         patron = self._patron()
         annotation1, ignore = create(
