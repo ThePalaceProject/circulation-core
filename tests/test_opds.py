@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from io import StringIO
 
 import feedparser
+import pytest
 from flask_babel import lazy_gettext as _
 from lxml import etree
 from psycopg2.extras import NumericRange
@@ -545,13 +546,28 @@ class TestOPDS(DatabaseTest):
         entry = parsed["entries"][0]
         assert work.presentation_edition.permanent_work_id == entry["simplified_pwid"]
 
-    def test_lcp_acquisition_link_contains_hashed_passphrase(self):
+    @pytest.mark.parametrize(
+        "collection_protocol, drm_scheme, should_have_lcp_hashed_passphrase",
+        [
+            (ExternalIntegration.LCP, DeliveryMechanism.LCP_DRM, True),
+            (ExternalIntegration.ODL, DeliveryMechanism.LCP_DRM, True),
+            (ExternalIntegration.ODL, DeliveryMechanism.ADOBE_DRM, False),
+            (ExternalIntegration.ODL2, DeliveryMechanism.LCP_DRM, True),
+            (ExternalIntegration.ODL2, DeliveryMechanism.ADOBE_DRM, False),
+        ],
+    )
+    def test_lcp_acquisition_link_contains_hashed_passphrase(
+        self,
+        collection_protocol: str,
+        drm_scheme: str,
+        should_have_lcp_hashed_passphrase: bool,
+    ) -> None:
         # Arrange
-        lcp_collection = self._collection(protocol=ExternalIntegration.LCP)
+        collection = self._collection(protocol=collection_protocol)
         data_source = DataSource.lookup(self._db, DataSource.LCP, autocreate=True)
         data_source_name = data_source.name
         license_pool = self._licensepool(
-            edition=None, data_source_name=data_source_name, collection=lcp_collection
+            edition=None, data_source_name=data_source_name, collection=collection
         )
         hashed_passphrase = "12345"
         patron = self._patron()
@@ -559,14 +575,19 @@ class TestOPDS(DatabaseTest):
         loan, _ = license_pool.loan_to(patron)
         rel = AcquisitionFeed.ACQUISITION_REL
         href = self._url
-        types = [DeliveryMechanism.LCP_DRM, Representation.EPUB_MEDIA_TYPE]
+        types = [drm_scheme, Representation.EPUB_MEDIA_TYPE]
         expected_result = (
-            '<link href="{0}" rel="http://opds-spec.org/acquisition" '
-            'type="application/vnd.readium.lcp.license.v1.0+json">'
-            '<ns0:hashed_passphrase xmlns:ns0="http://readium.org/lcp-specs/ns">{1}</ns0:hashed_passphrase>'
+            f'<link href="{href}" rel="http://opds-spec.org/acquisition" '
+            f'type="{drm_scheme}">'
+        )
+
+        if should_have_lcp_hashed_passphrase:
+            expected_result += f'<ns0:hashed_passphrase xmlns:ns0="http://readium.org/lcp-specs/ns">{hashed_passphrase}</ns0:hashed_passphrase>'
+
+        expected_result += (
             '<ns0:indirectAcquisition xmlns:ns0="http://opds-spec.org/2010/catalog" type="application/epub+zip"/>'
             "</link>"
-        ).format(href, hashed_passphrase)
+        )
 
         # Act
         lcp_credential_factory.set_hashed_passphrase(
@@ -2261,7 +2282,7 @@ class TestLookupAcquisitionFeed(DatabaseTest):
             "http://whatever.io",
             [],
             annotator=annotator,
-            **kwargs
+            **kwargs,
         )
 
     def entry(self, identifier, work, annotator=VerboseAnnotator, **kwargs):

@@ -24,6 +24,7 @@ from .model import (
     CachedFeed,
     Contributor,
     DataSource,
+    DeliveryMechanism,
     Edition,
     ExternalIntegration,
     Hyperlink,
@@ -1695,11 +1696,24 @@ class AcquisitionFeed(OPDSFeed):
         # and will not ask patrons to enter their passphrases
         # For more information please look here:
         # https://readium.org/lcp-specs/notes/lcp-key-retrieval.html#including-a-hashed-passphrase-in-an-opds-1-catalog
-        if active_loan and active_loan.license_pool.collection.protocol in [
-            ExternalIntegration.LCP,
-            ExternalIntegration.ODL,
-            ExternalIntegration.ODL2,
-        ]:
+        if (
+            active_loan
+            and active_loan.license_pool.collection.protocol
+            in [
+                ExternalIntegration.LCP,
+                ExternalIntegration.ODL,
+                ExternalIntegration.ODL2,
+            ]
+            and (
+                (
+                    active_loan.fulfillment
+                    and active_loan.fulfillment.delivery_mechanism
+                    and active_loan.fulfillment.delivery_mechanism
+                    == DeliveryMechanism.LCP_DRM
+                )
+                or initial_type == DeliveryMechanism.LCP_DRM
+            )
+        ):
             db = Session.object_session(active_loan)
             lcp_credential_factory = LCPCredentialFactory()
 
