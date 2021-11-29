@@ -65,10 +65,16 @@ def parse_identifier(db, identifier):
     :rtype: Optional[core.model.identifier.Identifier]
     """
     parsed_identifier = None
-    result = Identifier.parse_urn(db, identifier)
 
-    if result is not None:
-        parsed_identifier, _ = result
+    try:
+        result = Identifier.parse_urn(db, identifier)
+
+        if result is not None:
+            parsed_identifier, _ = result
+    except Exception:
+        logging.error(
+            f"An unexpected exception occurred during parsing identifier {identifier}"
+        )
 
     return parsed_identifier
 
