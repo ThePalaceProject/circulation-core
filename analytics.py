@@ -1,14 +1,14 @@
-import contextlib
 import importlib
-import os
+import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Set
 
 from sqlalchemy.orm.session import Session
 
 from .config import CannotLoadConfiguration
 from .model import ExternalIntegration
 from .util.datetime_helpers import utc_now
+from .util.log import log_elapsed_time
 
 
 class Analytics:
@@ -21,6 +21,7 @@ class Analytics:
     """
 
     _singleton_instance = None
+    log = logging.getLogger("Analytics manager")
 
     GLOBAL_ENABLED = None
     LIBRARY_ENABLED: Set[int] = set()
@@ -31,6 +32,7 @@ class Analytics:
             refresh = True
             instance = super().__new__(cls)
             cls._singleton_instance = instance
+            cls.log.info("Set singleton instance.")
         if refresh:
             instance._initialize_instance(_db)
         return instance
@@ -38,8 +40,10 @@ class Analytics:
     @classmethod
     def _reset_singleton_instance(cls):
         """Reset the singleton instance. Primarily used for tests."""
+        cls.log.info("Resetting singleton instance (should be used only for tests).")
         cls._singleton_instance = None
 
+    @log_elapsed_time(log_method=log.info, message_prefix="Initializing instance")
     def _initialize_instance(self, _db):
         """Initialize an instance (usually the singleton) of the class.
 
@@ -59,15 +63,16 @@ class Analytics:
         # Turn each integration into an analytics provider.
         for integration in integrations:
             module = integration.protocol
+            libraries = integration.libraries
             try:
                 provider_class = self._provider_class_from_module(module)
                 if provider_class:
-                    if not integration.libraries:
+                    if not libraries:
                         provider = provider_class(integration)
                         sitewide_providers.append(provider)
                         global_enabled = True
                     else:
-                        for library in integration.libraries:
+                        for library in libraries:
                             provider = provider_class(integration, library)
                             library_providers[library.id].append(provider)
                             library_enabled.add(library.id)
@@ -75,6 +80,11 @@ class Analytics:
                     initialization_exceptions[integration.id] = (
                         "Module %s does not have Provider defined." % module
                     )
+                self.log.info("Provider {provider!r} for protocol {protocol!r} has {scope} scope.".format(
+                    protocol=module,
+                    provider=provider_class.__name__,
+                    scope=f"per-library ({len(libraries)})" if libraries else "site-wide",
+                ))
             except (ImportError, CannotLoadConfiguration) as e:
                 initialization_exceptions[integration.id] = e
 
