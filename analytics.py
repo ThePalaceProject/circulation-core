@@ -80,11 +80,15 @@ class Analytics:
                     initialization_exceptions[integration.id] = (
                         "Module %s does not have Provider defined." % module
                     )
-                self.log.info("Provider {provider!r} for protocol {protocol!r} has {scope} scope.".format(
-                    protocol=module,
-                    provider=provider_class.__name__,
-                    scope=f"per-library ({len(libraries)})" if libraries else "site-wide",
-                ))
+                self.log.info(
+                    "Provider {provider!r} for protocol {protocol!r} has {scope} scope.".format(
+                        protocol=module,
+                        provider=provider_class.__name__,
+                        scope=f"per-library ({len(libraries)})"
+                        if libraries
+                        else "site-wide",
+                    )
+                )
             except (ImportError, CannotLoadConfiguration) as e:
                 initialization_exceptions[integration.id] = e
 
