@@ -112,8 +112,8 @@ class HasFullTableCache:
 
     @classmethod
     def by_cache_key(
-        cls, db: Session, cache_key: Hashable, lookup_hook: Callable
+        cls, db: Session, cache_key: Hashable, cache_miss_hook: Callable
     ) -> Tuple[Optional[CacheableObject], bool]:
-        """Look up and item by its cache key."""
+        """Look up an item by its cache key."""
         cache = cls.get_cache(db)
-        return cls._cache_lookup(db, cache, "key", cache_key, lookup_hook)
+        return cls._cache_lookup(db, cache, "key", cache_key, cache_miss_hook)

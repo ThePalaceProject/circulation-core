@@ -84,14 +84,14 @@ class TestHasFullTableCache:
     ):
 
         db = mock_db()
-        create_func = MagicMock(side_effect=lambda: (mock, True))
-        created, is_new = mock_class.by_cache_key(db, mock.cache_key(), create_func)
+        cache_miss_hook = MagicMock(side_effect=lambda: (mock, True))
+        created, is_new = mock_class.by_cache_key(db, mock.cache_key(), cache_miss_hook)
         cache = mock_class.get_cache(db)
 
         # Item from create_func
         assert is_new is True
         assert created is mock
-        create_func.assert_called_once()
+        cache_miss_hook.assert_called_once()
 
         # Make sure statistics are kept
         assert cache.stats.misses == 1
@@ -101,11 +101,11 @@ class TestHasFullTableCache:
 
         # Item from cache
         cached_item, cached_is_new = mock_class.by_cache_key(
-            db, mock.cache_key(), create_func
+            db, mock.cache_key(), cache_miss_hook
         )
         assert cached_is_new is False
         assert cached_item is created
-        create_func.assert_called_once()
+        cache_miss_hook.assert_called_once()
 
         # Make sure statistics are kept
         assert cache.stats.misses == 1
