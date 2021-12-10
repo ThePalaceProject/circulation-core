@@ -3,7 +3,9 @@ from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 
+from ...model import ConfigurationSetting
 from ...model.hasfulltablecache import HasFullTableCache
+from ...testing import DatabaseTest
 
 
 class TestHasFullTableCache:
@@ -156,3 +158,39 @@ class TestHasFullTableCache:
 
         assert cache.stats.misses == 0
         assert cache.stats.hits == 4
+
+
+class TestHasFullTableCache2(DatabaseTest):
+    def test_cached_values_are_properly_updated(self):
+        setting_key = "key"
+        setting_old_value = "old value"
+        setting_new_value = "new value"
+
+        # First, let's create a ConfigurationSetting instance and save it in the database.
+        setting = ConfigurationSetting(key=setting_key, _value=setting_old_value)
+        self._db.add(setting)
+        self._db.commit()
+
+        # Let's save ConfigurationSetting's ID to find it later.
+        setting_id = setting.id
+
+        # Now let's fetch the configuration setting from the database and add it to the cache.
+        db_setting1 = (
+            self._db.query(ConfigurationSetting)
+            .filter(ConfigurationSetting.key == setting_key)
+            .one()
+        )
+        ConfigurationSetting.warm_cache(self._db, lambda: [db_setting1])
+
+        # After, let's fetch it again and change its value.
+        db_setting2 = (
+            self._db.query(ConfigurationSetting)
+            .filter(ConfigurationSetting.key == setting_key)
+            .one()
+        )
+        db_setting2.value = setting_new_value
+
+        # Now let's make sure that the cached value has also been updated.
+        assert (
+            ConfigurationSetting.by_id(self._db, setting_id)._value == setting_new_value
+        )
