@@ -69,7 +69,11 @@ def _site_configuration_has_changed(_db, cooldown=1):
         # Update the timestamp.
         now = utc_now()
         earlier = now - datetime.timedelta(seconds=cooldown)
-        sql = "UPDATE timestamps SET finish=(:finish at time zone 'utc') WHERE service=:service AND collection_id IS NULL AND finish<=(:earlier at time zone 'utc');"
+        sql = (
+            "UPDATE timestamps SET finish=(:finish at time zone 'utc') WHERE "
+            "id IN (select id from timestamps WHERE service=:service AND collection_id IS NULL "
+            "AND finish<=(:earlier at time zone 'utc') FOR UPDATE SKIP LOCKED);"
+        )
         _db.execute(
             text(sql),
             dict(
