@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from . import Base, get_one
 
 # Import Protocol from typing extensions for older versions of Python
+# TODO: we can drop this when we go to Python >= 3.8
 if sys.version_info >= (3, 8):
     from typing import Protocol
 else:
@@ -25,6 +26,7 @@ class CacheableObject(Protocol):
 
 class HasFullTableCache:
     CacheTuple = namedtuple("CacheTuple", ["id", "key", "stats"])
+    CACHE_ATTRIBUTE = "_palace_cache"
 
     """
     A mixin class for ORM classes that maintain an in-memory cache of
@@ -86,9 +88,11 @@ class HasFullTableCache:
     @classmethod
     def get_cache(cls, _db: Session):
         """Get cache from database session."""
-        cache = getattr(_db, "_palace_cache", None)
-        if cache is None:
-            _db._palace_cache = cache = {}
+
+        # https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session.info
+        if cls.CACHE_ATTRIBUTE not in _db.info:
+            _db.info[cls.CACHE_ATTRIBUTE] = {}
+        cache = _db.info[cls.CACHE_ATTRIBUTE]
         if cls.__name__ not in cache:
             cache[cls.__name__] = cls.CacheTuple(
                 {}, {}, SimpleNamespace(hits=0, misses=0)

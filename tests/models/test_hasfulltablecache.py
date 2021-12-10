@@ -11,7 +11,7 @@ class TestHasFullTableCache:
     def mock_db(self):
         def mock():
             mock_db = MagicMock()
-            mock_db._palace_cache = {}
+            mock_db.info = {}
             return mock_db
 
         return mock
