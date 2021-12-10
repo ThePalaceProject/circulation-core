@@ -478,9 +478,6 @@ class Genre(Base, HasFullTableCache):
         "WorkGenre", backref="genre", cascade="all, delete-orphan"
     )
 
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
-
     def __repr__(self):
         if classifier.genres.get(self.name):
             length = len(classifier.genres[self.name].subgenres)

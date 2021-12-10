@@ -1,140 +1,91 @@
 # encoding: utf-8
 # HasFullTableCache
 
-import logging
+from collections import namedtuple
+from types import SimpleNamespace
+from typing import Callable, Dict, Hashable, Optional, Tuple
 
-from . import get_one
+from sqlalchemy.orm import Session
+
+from . import Base, get_one
 
 
 class HasFullTableCache(object):
-    """A mixin class for ORM classes that maintain an in-memory cache of
-    (hopefully) every item in the database table for performance reasons.
+    CacheTuple = namedtuple("CacheTuple", ["id", "key", "stats"])
+
     """
+    A mixin class for ORM classes that maintain an in-memory cache of
+    items previously requested from the database table for performance reasons.
 
-    RESET = object()
-
-    # You MUST define your own class-specific '_cache' and '_id_cache'
-    # variables, like so:
-    #
-    # _cache = HasFullTableCache.RESET
-    # _id_cache = HasFullTableCache.RESET
-
-    @classmethod
-    def reset_cache(cls):
-        cls._cache = cls.RESET
-        cls._id_cache = cls.RESET
+    Items in this cache are always maintained in the same database session.
+    """
 
     def cache_key(self):
         raise NotImplementedError()
 
     @classmethod
-    def _cache_insert(cls, obj, cache, id_cache):
-        """Cache an object for later retrieval, possibly by a different
-        database session.
-        """
+    def _cache_insert(cls, obj: Base, cache: CacheTuple):
+        """Cache an object for later retrieval."""
         key = obj.cache_key()
         id = obj.id
-        try:
-            if cache != cls.RESET:
-                cache[key] = obj
-            if id_cache != cls.RESET:
-                id_cache[id] = obj
-        except TypeError as e:
-            # The cache was reset in between the time we checked for a
-            # reset and the time we tried to put an object in the
-            # cache. Stop trying to mess with the cache.
-            pass
+        cache.id[id] = obj
+        cache.key[key] = obj
 
     @classmethod
-    def populate_cache(cls, _db):
-        """Populate the in-memory caches from scratch with every single
-        object from the database table.
-        """
-        cache = {}
-        id_cache = {}
-        for obj in _db.query(cls):
-            cls._cache_insert(obj, cache, id_cache)
-        cls._cache = cache
-        cls._id_cache = id_cache
-
-    @classmethod
-    def _cache_lookup(cls, _db, cache, cache_name, cache_key, lookup_hook):
+    def _cache_lookup(
+        cls,
+        _db: Session,
+        cache: CacheTuple,
+        cache_name: str,
+        cache_key: Hashable,
+        lookup_hook: Callable,
+    ) -> Tuple[Optional[Base], bool]:
         """Helper method used by both by_id and by_cache_key.
 
-        Looks up `cache_key` in `cache` and calls `lookup_hook`
-        to find/create it if it's not in there.
+        Looks up `cache_key` in the `cache_name` property of `cache`, returning
+        the item if its found, or calling `lookup_hook` and adding the item to
+        the cache if its not. This method also updates our cache statistics to
+        keep track of cache hits and misses.
         """
-        new = False
-        obj = None
-        if cache == cls.RESET:
-            # The cache has been reset. Populate it with the contents
-            # of the table.
-            cls.populate_cache(_db)
-
-            # Get the new value of the cache, replacing the value
-            # that turned out to be cls.RESET.
-            cache = getattr(cls, cache_name)
-
-        if cache != cls.RESET:
-            try:
-                obj = cache.get(cache_key)
-            except TypeError as e:
-                # This shouldn't happen. Even if the actual cache was
-                # reset just now, we still have a copy of the 'old'
-                # cache which passed the 'cache != cls.RESET' test.
-                pass
-
-        if not obj:
-            # Either this object didn't exist when the cache was
-            # populated, or the cache was reset while we were trying
-            # to look it up.
-            #
-            # Give up on the cache and go direct to the database,
-            # creating the object if necessary.
-            if lookup_hook:
-                obj, new = lookup_hook()
-            else:
-                obj = None
-            if not obj:
-                # The object doesn't exist and couldn't be created.
-                return obj, new
-
-            # Stick the object in the caches, assuming they're not
-            # currently in a reset state.
-            cls._cache_insert(obj, cls._cache, cls._id_cache)
-
-        if obj and obj not in _db:
-            try:
-                obj = _db.merge(obj, load=False)
-            except Exception as e:
-                logging.error(
-                    "Unable to merge cached object %r into database session",
-                    obj,
-                    exc_info=e,
-                )
-                # Try to look up a fresh copy of the object.
-                obj, new = lookup_hook()
-                if obj and obj in _db:
-                    logging.error("Was able to look up a fresh copy of %r", obj)
-                    return obj, new
-
-                # That didn't work. Re-raise the original exception.
-                logging.error("Unable to look up a fresh copy of %r", obj)
-                raise
-        return obj, new
+        lookup_cache = getattr(cache, cache_name)
+        if cache_key in lookup_cache:
+            cache.stats.hits += 1
+            return lookup_cache[cache_key], False
+        else:
+            cache.stats.misses += 1
+            obj, new = lookup_hook()
+            if obj is not None:
+                cls._cache_insert(obj, cache)
+            return obj, new
 
     @classmethod
-    def by_id(cls, _db, id):
+    def get_cache(cls, _db: Session):
+        """Get cache from database session."""
+        try:
+            cache = _db._palace_cache
+        except AttributeError:
+            _db._palace_cache = cache = {}
+        if cls.__name__ not in cache:
+            cache[cls.__name__] = cls.CacheTuple(
+                {}, {}, SimpleNamespace(hits=0, misses=0)
+            )
+        return cache[cls.__name__]
+
+    @classmethod
+    def by_id(cls, _db: Session, id: int) -> Optional[Base]:
         """Look up an item by its unique database ID."""
+        cache = cls.get_cache(_db)
 
         def lookup_hook():
             return get_one(_db, cls, id=id), False
 
-        obj, is_new = cls._cache_lookup(
-            _db, cls._id_cache, "_id_cache", id, lookup_hook
-        )
+        obj, _ = cls._cache_lookup(_db, cache, "id", id, lookup_hook)
         return obj
 
     @classmethod
-    def by_cache_key(cls, _db, cache_key, lookup_hook):
-        return cls._cache_lookup(_db, cls._cache, "_cache", cache_key, lookup_hook)
+    def by_cache_key(
+        cls, _db: Session, cache_key: Hashable, lookup_hook: Callable
+    ) -> Tuple[Optional[Base], bool]:
+        """Look up and item by its cache key."""
+        cache = cls.get_cache(_db)
+        return cls._cache_lookup(_db, cache, "key", cache_key, lookup_hook)

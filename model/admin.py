@@ -28,9 +28,6 @@ class Admin(Base, HasFullTableCache):
     # An Admin may have many roles.
     roles = relationship("AdminRole", backref="admin", cascade="all, delete-orphan")
 
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
-
     def cache_key(self):
         return self.email
 
@@ -231,9 +228,6 @@ class AdminRole(Base, HasFullTableCache):
         SITEWIDE_LIBRARIAN,
         LIBRARIAN,
     ]
-
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
 
     def cache_key(self):
         return (self.admin_id, self.library_id, self.role)

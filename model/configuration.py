@@ -104,7 +104,7 @@ class ExternalIntegrationLink(Base, HasFullTableCache):
     COLLECTION_MIRROR_SETTINGS = settings
 
 
-class ExternalIntegration(Base, HasFullTableCache):
+class ExternalIntegration(Base):
 
     """An external integration contains configuration for connecting
     to a third-party API.
@@ -271,9 +271,6 @@ class ExternalIntegration(Base, HasFullTableCache):
     PRIMARY_IDENTIFIER_SOURCE = "primary_identifier_source"
     DCTERMS_IDENTIFIER = "first_dcterms_identifier"
 
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
-
     __tablename__ = "externalintegrations"
     id = Column(Integer, primary_key=True)
 
@@ -327,16 +324,6 @@ class ExternalIntegration(Base, HasFullTableCache):
             len(self.settings),
             self.id,
         )
-
-    def cache_key(self):
-        # TODO: This is not ideal, but the lookup method isn't like
-        # other HasFullTableCache lookup methods, so for now we use
-        # the unique ID as the cache key. This means that
-        # by_cache_key() and by_id() do the same thing.
-        #
-        # This is okay because we need by_id() quite a
-        # bit and by_cache_key() not as much.
-        return self.id
 
     @classmethod
     def for_goal(cls, _db, goal):
@@ -627,9 +614,6 @@ class ConfigurationSetting(Base, HasFullTableCache):
             unique=True,
         ),
     )
-
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
 
     def __repr__(self):
         return "<ConfigurationSetting: key=%s, ID=%d>" % (self.key, self.id)

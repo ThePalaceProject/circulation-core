@@ -417,9 +417,6 @@ class SessionManager(object):
 
         list(DataSource.well_known_sources(session))
 
-        # Load all existing Genre objects.
-        Genre.populate_cache(session)
-
         # Create any genres not in the database.
         for g in list(classifier.genres.values()):
             # TODO: On the very first startup this is rather expensive

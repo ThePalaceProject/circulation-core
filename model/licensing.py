@@ -1763,9 +1763,6 @@ class DeliveryMechanism(Base, HasFullTableCache):
         backref="delivery_mechanism",
     )
 
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
-
     __table_args__ = (UniqueConstraint("content_type", "drm_scheme"),)
 
     @property

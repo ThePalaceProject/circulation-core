@@ -123,9 +123,6 @@ class Collection(Base, HasFullTableCache):
         "CustomList", secondary=lambda: collections_customlists, backref="collections"
     )
 
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
-
     # Most data sources offer different catalogs to different
     # libraries.  Data sources in this list offer the same catalog to
     # every library.

@@ -119,9 +119,6 @@ class Library(Base, HasFullTableCache):
         "CirculationEvent", backref="library", cascade="all, delete-orphan"
     )
 
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
-
     # A class-wide cache mapping library ID to the calculated value
     # used for Library.has_root_lane.  This is invalidated whenever
     # Lane configuration changes, and it will also expire on its own.

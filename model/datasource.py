@@ -78,9 +78,6 @@ class DataSource(Base, HasFullTableCache, DataSourceConstants):
         foreign_keys=lambda: [LicensePoolDeliveryMechanism.data_source_id],
     )
 
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
-
     def __repr__(self):
         return '<DataSource: name="%s">' % (self.name)
 

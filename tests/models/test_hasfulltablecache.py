@@ -1,49 +1,112 @@
 # encoding: utf-8
+from unittest.mock import MagicMock
+
+import pytest
+
 from ...model.hasfulltablecache import HasFullTableCache
-from ...testing import DatabaseTest
 
 
-class MockHasTableCache(HasFullTableCache):
+class TestHasFullTableCache:
+    @pytest.fixture()
+    def mock_db(self):
+        def mock():
+            mock_db = MagicMock()
+            mock_db._palace_cache = {}
+            return mock_db
 
-    """A simple HasFullTableCache that returns the same cache key
-    for every object.
-    """
+        return mock
 
-    _cache = HasFullTableCache.RESET
-    _id_cache = HasFullTableCache.RESET
+    @pytest.fixture()
+    def mock(self):
+        mock = MagicMock()
+        mock.id = "the only ID"
+        mock.cache_key = MagicMock(return_value="the only cache key")
+        return mock
 
-    ID = "the only ID"
-    KEY = "the only cache key"
+    @pytest.fixture()
+    def mock_class(self):
+        return HasFullTableCache
 
-    @property
-    def id(self):
-        return self.ID
+    def test_get_cache(self, mock_db, mock_class):
+        mock_db1 = mock_db()
+        mock_db2 = mock_db()
 
-    def cache_key(self):
-        return self.KEY
+        # Calling get_cache with two different database
+        # sessions should return two different caches
+        cache1 = mock_class.get_cache(mock_db1)
+        cache2 = mock_class.get_cache(mock_db2)
+        assert cache1 is not cache2
 
+        # Each one is a CacheTuple instance
+        assert isinstance(cache1, mock_class.CacheTuple)
+        assert isinstance(cache2, mock_class.CacheTuple)
 
-class TestHasFullTableCache(DatabaseTest):
-    def setup_method(self):
-        super(TestHasFullTableCache, self).setup_method()
-        self.mock_class = MockHasTableCache
-        self.mock = MockHasTableCache()
-        self.mock._cache = HasFullTableCache.RESET
+    def test_cache_insert(self, mock_db, mock_class, mock):
+        db = mock_db()
+        cache = mock_class.get_cache(db)
+        mock_class._cache_insert(mock, cache)
 
-    def test_reset_cache(self):
-        self.mock_class._cache = object()
-        self.mock_class._id_cache = object()
-        self.mock_class.reset_cache()
-        assert HasFullTableCache.RESET == self.mock_class._cache
-        assert HasFullTableCache.RESET == self.mock_class._id_cache
+        # Items are inserted in both the key and id cache
+        assert cache.id[mock.id] == mock
+        assert cache.key[mock.cache_key()] == mock
 
-    def test_cache_insert(self):
-        temp_cache = {}
-        temp_id_cache = {}
-        self.mock_class._cache_insert(self.mock, temp_cache, temp_id_cache)
-        assert {MockHasTableCache.KEY: self.mock} == temp_cache
-        assert {MockHasTableCache.ID: self.mock} == temp_id_cache
+    def test_by_id(self, mock_db, mock_class, mock):
+        db = mock_db()
 
-    # populate_cache(), by_cache_key(), and by_id() are tested in
-    # TestGenre since those methods must be backed by a real database
-    # table.
+        # Look up item using by_id
+        item = mock_class.by_id(db, mock.id)
+        cache = mock_class.get_cache(db)
+
+        # Make sure statistics are kept
+        assert cache.stats.misses == 1
+        assert cache.stats.hits == 0
+        assert len(cache.id) == 1
+        assert len(cache.key) == 1
+        # Item was queried from DB
+        db.query.assert_called_once()
+
+        # Lookup item again
+        cached_item = mock_class.by_id(db, item.id)
+
+        # Stats are updated
+        assert cache.stats.misses == 1
+        assert cache.stats.hits == 1
+        assert len(cache.id) == 1
+        assert len(cache.key) == 1
+        # Item comes from cache
+        assert item == cached_item
+        db.query.assert_called_once()
+
+    def test_by_cache_key_miss_triggers_create_function(
+        self, mock_db, mock_class, mock
+    ):
+
+        db = mock_db()
+        create_func = MagicMock(side_effect=lambda: (mock, True))
+        created, is_new = mock_class.by_cache_key(db, mock.cache_key(), create_func)
+        cache = mock_class.get_cache(db)
+
+        # Item from create_func
+        assert is_new is True
+        assert created is mock
+        create_func.assert_called_once()
+
+        # Make sure statistics are kept
+        assert cache.stats.misses == 1
+        assert cache.stats.hits == 0
+        assert len(cache.id) == 1
+        assert len(cache.key) == 1
+
+        # Item from cache
+        cached_item, cached_is_new = mock_class.by_cache_key(
+            db, mock.cache_key(), create_func
+        )
+        assert cached_is_new is False
+        assert cached_item is created
+        create_func.assert_called_once()
+
+        # Make sure statistics are kept
+        assert cache.stats.misses == 1
+        assert cache.stats.hits == 1
+        assert len(cache.id) == 1
+        assert len(cache.key) == 1
