@@ -1,5 +1,5 @@
 # encoding: utf-8
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 
@@ -110,3 +110,49 @@ class TestHasFullTableCache:
         assert cache.stats.hits == 1
         assert len(cache.id) == 1
         assert len(cache.key) == 1
+
+    def test_warm_cache(self, mock_db, mock_class):
+        item1 = MagicMock()
+        type(item1).id = PropertyMock(return_value=1)
+        item1.cache_key = MagicMock(return_value="key1")
+        item2 = MagicMock()
+        type(item2).id = PropertyMock(return_value=2)
+        item2.cache_key = MagicMock(return_value="key2")
+
+        def populate():
+            return [item1, item2]
+
+        db = mock_db()
+        # Throw exception if we query database
+        db.query.side_effect = Exception
+
+        # Warm cache with items from populate
+        mock_class.warm_cache(db, populate)
+        cache = mock_class.get_cache(db)
+
+        assert cache.stats.misses == 0
+        assert cache.stats.hits == 0
+        assert len(cache.id) == 2
+        assert len(cache.key) == 2
+
+        print(cache.id.keys())
+
+        # Get item1 by key and id
+        item1_by_id = mock_class.by_id(db, 1)
+        assert item1_by_id is item1
+        item1_by_key, item1_new = mock_class.by_cache_key(db, "key1", db.query)
+        assert item1_by_key is item1
+        assert item1_new is False
+
+        assert cache.stats.misses == 0
+        assert cache.stats.hits == 2
+
+        # Get item2 by key and id
+        item2_by_id = mock_class.by_id(db, 2)
+        assert item2_by_id is item2
+        item2_by_key, item2_new = mock_class.by_cache_key(db, "key2", db.query)
+        assert item2_by_key is item2
+        assert item2_new is False
+
+        assert cache.stats.misses == 0
+        assert cache.stats.hits == 4
