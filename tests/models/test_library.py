@@ -31,12 +31,14 @@ class TestLibrary(DatabaseTest):
         assert name == library.cache_key()
 
         # Cache is empty.
-        assert HasFullTableCache.RESET == Library._cache
+        cache = Library.get_cache(self._db)
+        assert len(cache.id) == 0
+        assert len(cache.key) == 0
 
         assert library == Library.lookup(self._db, name)
 
         # Cache is populated.
-        assert library == Library._cache[name]
+        assert library == cache.key[name]
 
     def test_default(self):
         # We start off with no libraries.

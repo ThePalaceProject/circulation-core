@@ -12,11 +12,6 @@ class TestDataSource(DatabaseTest):
     def test_lookup(self):
         key = DataSource.GUTENBERG
 
-        # Unlike with most of these tests, this cache doesn't start
-        # out empty. It's populated with all known values at the start
-        # of the test. Let's reset the cache.
-        DataSource.reset_cache()
-
         gutenberg = DataSource.lookup(self._db, DataSource.GUTENBERG)
         assert key == gutenberg.name
         assert True == gutenberg.offers_licenses
@@ -27,10 +22,6 @@ class TestDataSource(DatabaseTest):
 
         # Now try creating a new data source.
         key = "New data source"
-
-        # It's not in the cache.
-        assert (None, False) == DataSource.by_cache_key(self._db, key, None)
-
         new_source = DataSource.lookup(
             self._db, key, autocreate=True, offers_licenses=True
         )
@@ -38,9 +29,6 @@ class TestDataSource(DatabaseTest):
         # A new data source has been created.
         assert key == new_source.name
         assert True == new_source.offers_licenses
-
-        # The cache was reset when the data source was created.
-        assert HasFullTableCache.RESET == DataSource._cache
 
         assert (new_source, False) == DataSource.by_cache_key(self._db, key, None)
 
