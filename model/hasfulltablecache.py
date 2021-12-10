@@ -66,7 +66,7 @@ class HasFullTableCache:
 
     @classmethod
     def _cache_remove(cls, obj: CacheableObject, cache: CacheTuple):
-        """ Remove an object from the cache """
+        """Remove an object from the cache"""
         key = obj.cache_key()
         id = obj.id
         id_removed = cache.id.pop(id, None)
@@ -104,7 +104,9 @@ class HasFullTableCache:
                 # This object has been deleted since it was cached remove from cache
                 # and do another lookup.
                 cls._cache_remove(obj, cache)
-                return cls._cache_lookup(db, cache, cache_name, cache_key, cache_miss_hook)
+                return cls._cache_lookup(
+                    db, cache, cache_name, cache_key, cache_miss_hook
+                )
 
             else:
                 # Object is good, return it from cache

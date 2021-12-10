@@ -3,8 +3,7 @@ from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 
-from ...model import ConfigurationSetting
-from ...model import hasfulltablecache
+from ...model import ConfigurationSetting, hasfulltablecache
 from ...model.hasfulltablecache import HasFullTableCache
 from ...testing import DatabaseTest
 
