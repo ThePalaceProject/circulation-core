@@ -291,7 +291,6 @@ class ExternalIntegration(Base):
     settings = relationship(
         "ConfigurationSetting",
         backref="external_integration",
-        lazy="joined",
         cascade="all, delete",
     )
 
@@ -369,14 +368,12 @@ class ExternalIntegration(Base):
     @classmethod
     def lookup(cls, _db, protocol, goal, library=None):
 
-        integrations = (
-            _db.query(cls)
-            .outerjoin(cls.libraries)
-            .filter(cls.protocol == protocol, cls.goal == goal)
-        )
+        integrations = _db.query(cls).filter(cls.protocol == protocol, cls.goal == goal)
 
         if library:
-            integrations = integrations.filter(Library.id == library.id)
+            integrations = integrations.join(cls.libraries).filter(
+                Library.id == library.id
+            )
 
         integrations = integrations.all()
         if len(integrations) > 1:
