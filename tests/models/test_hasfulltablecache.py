@@ -79,7 +79,7 @@ class TestHasFullTableCache:
         assert item == cached_item
         db.query.assert_called_once()
 
-    def test_by_cache_key_miss_triggers_create_function(
+    def test_by_cache_key_miss_triggers_cache_miss_hook(
         self, mock_db, mock_class, mock
     ):
 
@@ -160,7 +160,7 @@ class TestHasFullTableCache:
         assert cache.stats.hits == 4
 
 
-class TestHasFullTableCache2(DatabaseTest):
+class TestHasFullTableCacheDatabase(DatabaseTest):
     def test_cached_values_are_properly_updated(self):
         setting_key = "key"
         setting_old_value = "old value"
@@ -194,3 +194,17 @@ class TestHasFullTableCache2(DatabaseTest):
         assert (
             ConfigurationSetting.by_id(self._db, setting_id)._value == setting_new_value
         )
+
+    def test_cached_value_deleted(self):
+        # Get setting
+        setting = ConfigurationSetting.for_library_and_externalintegration(self._db, "test", None, None)
+        setting.value = "testing"
+
+        # Delete setting
+        self._db.delete(setting)
+
+        # Fetch setting from cache
+        setting_cached = ConfigurationSetting.for_library_and_externalintegration(self._db, "test", None, None)
+
+        # Deleted and cached setting are the same
+        assert setting_cached is setting
