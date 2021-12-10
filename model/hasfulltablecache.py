@@ -46,16 +46,25 @@ class HasFullTableCache(object):
             pass
 
     @classmethod
+    def _cache_query(cls, _db):
+        return _db.query(cls)
+
+    @classmethod
     def populate_cache(cls, _db):
         """Populate the in-memory caches from scratch with every single
         object from the database table.
         """
         cache = {}
         id_cache = {}
-        for obj in _db.query(cls):
+        for obj in cls._cache_query(_db):
             cls._cache_insert(obj, cache, id_cache)
         cls._cache = cache
         cls._id_cache = id_cache
+
+    @classmethod
+    def update_cache(cls, objects):
+        for obj in objects:
+            cls._cache_insert(obj, cls._cache, cls._id_cache)
 
     @classmethod
     def _cache_lookup(cls, _db, cache, cache_name, cache_key, lookup_hook):

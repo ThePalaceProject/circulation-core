@@ -8,10 +8,11 @@ from contextlib import contextmanager
 from enum import Enum
 
 from flask_babel import lazy_gettext as _
-from sqlalchemy import Column, ForeignKey, Index, Integer, Unicode, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Index, Integer, Unicode
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session
+from sqlalchemy.orm.strategy_options import joinedload
 from sqlalchemy.sql.expression import and_
 
 from ..config import CannotLoadConfiguration, Configuration
@@ -293,7 +294,7 @@ class ExternalIntegration(Base, HasFullTableCache):
     # ConfigurationSettings.
     settings = relationship(
         "ConfigurationSetting",
-        backref="external_integration",
+        back_populates="external_integration",
         lazy="joined",
         cascade="all, delete",
     )
@@ -583,7 +584,11 @@ class ConfigurationSetting(Base, HasFullTableCache):
     external_integration_id = Column(
         Integer, ForeignKey("externalintegrations.id"), index=True
     )
+    external_integration = relationship(
+        "ExternalIntegration", back_populates="settings"
+    )
     library_id = Column(Integer, ForeignKey("libraries.id"), index=True)
+    library = relationship("Library", back_populates="settings")
     key = Column(Unicode)
     _value = Column(Unicode, name="value")
 

@@ -109,7 +109,7 @@ class Library(Base, HasFullTableCache):
     # ConfigurationSettings.
     settings = relationship(
         "ConfigurationSetting",
-        backref="library",
+        back_populates="library",
         lazy="joined",
         cascade="all, delete",
     )
