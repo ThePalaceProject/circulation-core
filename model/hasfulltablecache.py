@@ -1,10 +1,12 @@
 # encoding: utf-8
 # HasFullTableCache
+import logging
 import sys
 from collections import namedtuple
 from types import SimpleNamespace
 from typing import Callable, Hashable, Iterable, Optional, Tuple
 
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 from . import Base, get_one
@@ -39,6 +41,10 @@ class HasFullTableCache:
         raise NotImplementedError()
 
     @classmethod
+    def log(cls):
+        return logging.getLogger(cls.__class__.__name__)
+
+    @classmethod
     def warm_cache(
         cls, db: Session, get_objects: Callable[[], Iterable[CacheableObject]]
     ):
@@ -59,9 +65,23 @@ class HasFullTableCache:
         cache.key[key] = obj
 
     @classmethod
+    def _cache_remove(cls, obj: CacheableObject, cache: CacheTuple):
+        """ Remove an object from the cache """
+        key = obj.cache_key()
+        id = obj.id
+        id_removed = cache.id.pop(id, None)
+        key_removed = cache.key.pop(key, None)
+        if id_removed is None or key_removed is None:
+            # We couldn't find the item we want to remove, perhaps because its id
+            # or key values are no longer valid. We will reset the cache in this case.
+            cls.log().warning("Unable to remove object from cache. Resetting cache.")
+            cache.id.clear()
+            cache.key.clear()
+
+    @classmethod
     def _cache_lookup(
         cls,
-        _db: Session,
+        db: Session,
         cache: CacheTuple,
         cache_name: str,
         cache_key: Hashable,
@@ -76,8 +96,21 @@ class HasFullTableCache:
         """
         lookup_cache = getattr(cache, cache_name)
         if cache_key in lookup_cache:
-            cache.stats.hits += 1
-            return lookup_cache[cache_key], False
+            obj = lookup_cache[cache_key]
+
+            # Get information about state of object in cache
+            insp = inspect(obj)
+            if insp is None or insp.deleted or insp.detached or obj in db.deleted:
+                # This object has been deleted since it was cached remove from cache
+                # and do another lookup.
+                cls._cache_remove(obj, cache)
+                return cls._cache_lookup(db, cache, cache_name, cache_key, cache_miss_hook)
+
+            else:
+                # Object is good, return it from cache
+                cache.stats.hits += 1
+                return obj, False
+
         else:
             cache.stats.misses += 1
             obj, new = cache_miss_hook()

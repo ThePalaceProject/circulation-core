@@ -4,11 +4,20 @@ from unittest.mock import MagicMock, PropertyMock
 import pytest
 
 from ...model import ConfigurationSetting
+from ...model import hasfulltablecache
 from ...model.hasfulltablecache import HasFullTableCache
 from ...testing import DatabaseTest
 
 
 class TestHasFullTableCache:
+    @pytest.fixture(autouse=True)
+    def mock_inspect(self, monkeypatch):
+        # mock the sqlalchemy inspect function so we don't need a real database
+        mock = MagicMock()
+        type(mock).deleted = PropertyMock(return_value=False)
+        type(mock).detached = PropertyMock(return_value=False)
+        monkeypatch.setattr(hasfulltablecache, "inspect", lambda x: mock)
+
     @pytest.fixture()
     def mock_db(self):
         def mock():
@@ -137,8 +146,6 @@ class TestHasFullTableCache:
         assert len(cache.id) == 2
         assert len(cache.key) == 2
 
-        print(cache.id.keys())
-
         # Get item1 by key and id
         item1_by_id = mock_class.by_id(db, 1)
         assert item1_by_id is item1
@@ -158,6 +165,41 @@ class TestHasFullTableCache:
 
         assert cache.stats.misses == 0
         assert cache.stats.hits == 4
+
+    def test_cache_remove(self, mock_db, mock_class):
+        db = mock_db()
+
+        # put items into cache
+        item1, _ = mock_class.by_cache_key(db, "key1", lambda: (MagicMock(), False))
+        item2, _ = mock_class.by_cache_key(db, "key2", lambda: (MagicMock(), False))
+        cache = mock_class.get_cache(db)
+        assert len(cache.id) == 2
+        assert len(cache.key) == 2
+
+        # Remove item1 from cache
+        mock_class._cache_remove(item1, cache)
+
+        # item2 is left in cache
+        assert len(cache.id) == 1
+        assert len(cache.key) == 1
+        assert cache.id.get(item2.id) is item2
+
+    def test_cache_remove_fail(self, mock_db, mock_class):
+        db = mock_db()
+
+        # put items into cache
+        mock_class.by_cache_key(db, "key1", lambda: (MagicMock(), False))
+        mock_class.by_cache_key(db, "key2", lambda: (MagicMock(), False))
+        cache = mock_class.get_cache(db)
+        assert len(cache.id) == 2
+        assert len(cache.key) == 2
+
+        # Try to remove an item that cannot be found in cache
+        mock_class._cache_remove(MagicMock(), cache)
+
+        # Cache clears itself to make sure we are not returning expired items
+        assert len(cache.id) == 0
+        assert len(cache.key) == 0
 
 
 class TestHasFullTableCacheDatabase(DatabaseTest):
@@ -197,14 +239,48 @@ class TestHasFullTableCacheDatabase(DatabaseTest):
 
     def test_cached_value_deleted(self):
         # Get setting
-        setting = ConfigurationSetting.for_library_and_externalintegration(self._db, "test", None, None)
+        setting = ConfigurationSetting.sitewide(self._db, "test")
         setting.value = "testing"
 
         # Delete setting
         self._db.delete(setting)
 
-        # Fetch setting from cache
-        setting_cached = ConfigurationSetting.for_library_and_externalintegration(self._db, "test", None, None)
+        # we should no longer be able to get setting from cache
+        cached = ConfigurationSetting.by_id(self._db, setting.id)
+        cache = ConfigurationSetting.get_cache(self._db)
+        assert cached is None
+        assert len(cache.id) == 0
+        assert len(cache.key) == 0
 
-        # Deleted and cached setting are the same
-        assert setting_cached is setting
+    def test_cached_value_deleted_flushed(self):
+        # Get setting
+        setting = ConfigurationSetting.sitewide(self._db, "test")
+        setting.value = "testing"
+
+        # Delete setting and flush
+        self._db.delete(setting)
+        self._db.flush()
+
+        # we should no longer be able to get setting from cache
+        cached = ConfigurationSetting.by_id(self._db, setting.id)
+        cache = ConfigurationSetting.get_cache(self._db)
+        assert cached is None
+        assert len(cache.id) == 0
+        assert len(cache.key) == 0
+
+    def test_cached_value_deleted_committed(self):
+        # Get setting
+        setting = ConfigurationSetting.sitewide(self._db, "test")
+        setting.value = "testing"
+        self._db.commit()
+
+        # Delete setting and commit
+        self._db.delete(setting)
+        self._db.commit()
+
+        # We should no longer be able to get setting from cache
+        cached = ConfigurationSetting.by_id(self._db, setting.id)
+        cache = ConfigurationSetting.get_cache(self._db)
+        assert cached is None
+        assert len(cache.id) == 0
+        assert len(cache.key) == 0
