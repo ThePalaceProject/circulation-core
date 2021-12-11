@@ -6,7 +6,6 @@ from collections import namedtuple
 from types import SimpleNamespace
 from typing import Callable, Hashable, Iterable, Optional, Tuple
 
-from sqlalchemy import inspect
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -100,9 +99,7 @@ class HasFullTableCache:
         lookup_cache = getattr(cache, cache_name)
         if cache_key in lookup_cache:
             obj = lookup_cache[cache_key]
-
-            insp = inspect(obj)
-            if insp is None or insp.deleted or insp.detached or obj in db.deleted:
+            if obj not in db or obj in db.deleted:
                 # This object has been deleted since it was cached. Remove it from
                 # cache and do another lookup.
                 cls._cache_remove(obj, cache)

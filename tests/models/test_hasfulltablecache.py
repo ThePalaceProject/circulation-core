@@ -3,25 +3,19 @@ from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 
-from ...model import ConfigurationSetting, hasfulltablecache
+from ...model import ConfigurationSetting
 from ...model.hasfulltablecache import HasFullTableCache
 from ...testing import DatabaseTest
 
 
 class TestHasFullTableCache:
-    @pytest.fixture(autouse=True)
-    def mock_inspect(self, monkeypatch):
-        # mock the sqlalchemy inspect function so we don't need a real database
-        mock = MagicMock()
-        type(mock).deleted = PropertyMock(return_value=False)
-        type(mock).detached = PropertyMock(return_value=False)
-        monkeypatch.setattr(hasfulltablecache, "inspect", lambda x: mock)
-
     @pytest.fixture()
     def mock_db(self):
         def mock():
             mock_db = MagicMock()
             mock_db.info = {}
+            mock_db.__contains__ = MagicMock(return_value=True)
+            mock_db.deleted.__contains__ = MagicMock(return_value=False)
             return mock_db
 
         return mock
