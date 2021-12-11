@@ -70,16 +70,14 @@ def _site_configuration_has_changed(_db, cooldown=1):
         now = utc_now()
         earlier = now - datetime.timedelta(seconds=cooldown)
 
-        # We use SKIP LOCKED in the query here, to skip this update if any other
-        # process is currently updating the timestamp. This prevents us from waiting
-        # for the other transaction to update the timestamp, only to update it ourselves
-        # it also avoids a possible deadlock where a request calls back into itself
-        # for example during the library registration process.
+        # Using SKIP LOCKED here allows us avoid waiting for another process that is
+        # (presumably) already updating the timestamp, only to immediately update it
+        # again ourselves after the wait. It also avoids a possible deadlock for cases
+        # in which a request results in another call into the app server while that
+        # request is still active. For example, during library registration.
         #
         # During registration we make requests that look like this:
         # CM -- POST(register) --> Registry -- GET(authentication_document)--> CM
-        # Which could deadlock if one CM process is waiting for another one to update
-        # the timestamp column.
         sql = (
             "UPDATE timestamps SET finish=(:finish at time zone 'utc') WHERE "
             "id IN (select id from timestamps WHERE service=:service AND collection_id IS NULL "

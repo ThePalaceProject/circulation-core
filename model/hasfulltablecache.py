@@ -98,11 +98,10 @@ class HasFullTableCache:
         if cache_key in lookup_cache:
             obj = lookup_cache[cache_key]
 
-            # Get information about state of object in cache
             insp = inspect(obj)
             if insp is None or insp.deleted or insp.detached or obj in db.deleted:
-                # This object has been deleted since it was cached remove from cache
-                # and do another lookup.
+                # This object has been deleted since it was cached. Remove it from
+                # cache and do another lookup.
                 cls._cache_remove(obj, cache)
                 return cls._cache_lookup(
                     db, cache, cache_name, cache_key, cache_miss_hook
