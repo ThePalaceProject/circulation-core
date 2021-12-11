@@ -200,6 +200,23 @@ class TestHasFullTableCache:
         assert len(cache.id) == 0
         assert len(cache.key) == 0
 
+    def test_cache_remove_exception(self, mock_db, mock_class):
+        db = mock_db()
+
+        # put items into cache
+        mock_class.by_cache_key(db, "key1", lambda: (MagicMock(), False))
+        mock_class.by_cache_key(db, "key2", lambda: (MagicMock(), False))
+        cache = mock_class.get_cache(db)
+        assert len(cache.id) == 2
+        assert len(cache.key) == 2
+
+        # Try to remove an item that causes an exception
+        mock_class._cache_remove(MagicMock(side_effect=KeyError), cache)
+
+        # Cache clears itself to make sure we are not returning expired items
+        assert len(cache.id) == 0
+        assert len(cache.key) == 0
+
 
 class TestHasFullTableCacheDatabase(DatabaseTest):
     def test_cached_values_are_properly_updated(self):

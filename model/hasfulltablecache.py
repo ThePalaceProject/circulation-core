@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from typing import Callable, Hashable, Iterable, Optional, Tuple
 
 from sqlalchemy import inspect
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from . import Base, get_one
@@ -67,13 +68,15 @@ class HasFullTableCache:
     @classmethod
     def _cache_remove(cls, obj: CacheableObject, cache: CacheTuple):
         """Remove an object from the cache"""
-        key = obj.cache_key()
-        id = obj.id
-        id_removed = cache.id.pop(id, None)
-        key_removed = cache.key.pop(key, None)
-        if id_removed is None or key_removed is None:
-            # We couldn't find the item we want to remove, perhaps because its id
-            # or key values are no longer valid. We will reset the cache in this case.
+        try:
+            key = obj.cache_key()
+            id = obj.id
+            cache.id.pop(id)
+            cache.key.pop(key)
+        except (KeyError, SQLAlchemyError):
+            # We couldn't find the item we want to remove, or there was an exception
+            # getting its cache key or ID, perhaps because its id or key values are
+            # no longer valid. Reset the cache to be safe.
             cls.log().warning("Unable to remove object from cache. Resetting cache.")
             cache.id.clear()
             cache.key.clear()
