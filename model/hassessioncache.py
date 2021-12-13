@@ -46,14 +46,20 @@ class HasSessionCache:
 
     @classmethod
     def cache_warm(
-        cls, db: Session, get_objects: Callable[[], Iterable[CacheableObject]]
+        cls,
+        db: Session,
+        get_objects: Optional[Callable[[], Iterable[CacheableObject]]] = None,
     ):
         """
         Populate the cache with the contents of `get_objects`. Useful to populate
         the cache in advance with items we know we will use.
         """
         cache = cls._cache_from_session(db)
-        for obj in get_objects():
+        if get_objects is None:
+            # Populate the cache with the whole table
+            get_objects = db.query(cls).all
+        objects = get_objects()
+        for obj in objects:
             cls._cache_insert(obj, cache)
 
     @classmethod
