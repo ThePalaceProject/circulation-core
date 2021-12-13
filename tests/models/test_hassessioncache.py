@@ -31,14 +31,14 @@ class TestHasSessionCache:
     def mock_class(self):
         return HasSessionCache
 
-    def test_get_cache(self, mock_db, mock_class):
+    def test_cache_from_session(self, mock_db, mock_class):
         mock_db1 = mock_db()
         mock_db2 = mock_db()
 
-        # Calling get_cache with two different database
+        # Calling _cache_from_session with two different database
         # sessions should return two different caches
-        cache1 = mock_class.get_cache(mock_db1)
-        cache2 = mock_class.get_cache(mock_db2)
+        cache1 = mock_class._cache_from_session(mock_db1)
+        cache2 = mock_class._cache_from_session(mock_db2)
         assert cache1 is not cache2
 
         # Each one is a CacheTuple instance
@@ -47,7 +47,7 @@ class TestHasSessionCache:
 
     def test_cache_insert(self, mock_db, mock_class, mock):
         db = mock_db()
-        cache = mock_class.get_cache(db)
+        cache = mock_class._cache_from_session(db)
         mock_class._cache_insert(mock, cache)
 
         # Items are inserted in both the key and id cache
@@ -59,7 +59,7 @@ class TestHasSessionCache:
 
         # Look up item using by_id
         item = mock_class.by_id(db, mock.id)
-        cache = mock_class.get_cache(db)
+        cache = mock_class._cache_from_session(db)
 
         # Make sure statistics are kept
         assert cache.stats.misses == 1
@@ -88,7 +88,7 @@ class TestHasSessionCache:
         db = mock_db()
         cache_miss_hook = MagicMock(side_effect=lambda: (mock, True))
         created, is_new = mock_class.by_cache_key(db, mock.cache_key(), cache_miss_hook)
-        cache = mock_class.get_cache(db)
+        cache = mock_class._cache_from_session(db)
 
         # Item from create_func
         assert is_new is True
@@ -131,8 +131,8 @@ class TestHasSessionCache:
         db.query.side_effect = Exception
 
         # Warm cache with items from populate
-        mock_class.warm_cache(db, populate)
-        cache = mock_class.get_cache(db)
+        mock_class.cache_warm(db, populate)
+        cache = mock_class._cache_from_session(db)
 
         assert cache.stats.misses == 0
         assert cache.stats.hits == 0
@@ -165,7 +165,7 @@ class TestHasSessionCache:
         # put items into cache
         item1, _ = mock_class.by_cache_key(db, "key1", lambda: (MagicMock(), False))
         item2, _ = mock_class.by_cache_key(db, "key2", lambda: (MagicMock(), False))
-        cache = mock_class.get_cache(db)
+        cache = mock_class._cache_from_session(db)
         assert len(cache.id) == 2
         assert len(cache.key) == 2
 
@@ -183,7 +183,7 @@ class TestHasSessionCache:
         # put items into cache
         mock_class.by_cache_key(db, "key1", lambda: (MagicMock(), False))
         mock_class.by_cache_key(db, "key2", lambda: (MagicMock(), False))
-        cache = mock_class.get_cache(db)
+        cache = mock_class._cache_from_session(db)
         assert len(cache.id) == 2
         assert len(cache.key) == 2
 
@@ -200,7 +200,7 @@ class TestHasSessionCache:
         # put items into cache
         mock_class.by_cache_key(db, "key1", lambda: (MagicMock(), False))
         mock_class.by_cache_key(db, "key2", lambda: (MagicMock(), False))
-        cache = mock_class.get_cache(db)
+        cache = mock_class._cache_from_session(db)
         assert len(cache.id) == 2
         assert len(cache.key) == 2
 
@@ -232,7 +232,7 @@ class TestHasFullTableCacheDatabase(DatabaseTest):
             .filter(ConfigurationSetting.key == setting_key)
             .one()
         )
-        ConfigurationSetting.warm_cache(self._db, lambda: [db_setting1])
+        ConfigurationSetting.cache_warm(self._db, lambda: [db_setting1])
 
         # After, let's fetch it again and change its value.
         db_setting2 = (
@@ -257,7 +257,7 @@ class TestHasFullTableCacheDatabase(DatabaseTest):
 
         # we should no longer be able to get setting from cache
         cached = ConfigurationSetting.by_id(self._db, setting.id)
-        cache = ConfigurationSetting.get_cache(self._db)
+        cache = ConfigurationSetting._cache_from_session(self._db)
         assert cached is None
         assert len(cache.id) == 0
         assert len(cache.key) == 0
@@ -273,7 +273,7 @@ class TestHasFullTableCacheDatabase(DatabaseTest):
 
         # we should no longer be able to get setting from cache
         cached = ConfigurationSetting.by_id(self._db, setting.id)
-        cache = ConfigurationSetting.get_cache(self._db)
+        cache = ConfigurationSetting._cache_from_session(self._db)
         assert cached is None
         assert len(cache.id) == 0
         assert len(cache.key) == 0
@@ -290,7 +290,7 @@ class TestHasFullTableCacheDatabase(DatabaseTest):
 
         # We should no longer be able to get setting from cache
         cached = ConfigurationSetting.by_id(self._db, setting.id)
-        cache = ConfigurationSetting.get_cache(self._db)
+        cache = ConfigurationSetting._cache_from_session(self._db)
         assert cached is None
         assert len(cache.id) == 0
         assert len(cache.key) == 0

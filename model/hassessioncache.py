@@ -45,14 +45,14 @@ class HasSessionCache:
         return logging.getLogger(cls.__class__.__name__)
 
     @classmethod
-    def warm_cache(
+    def cache_warm(
         cls, db: Session, get_objects: Callable[[], Iterable[CacheableObject]]
     ):
         """
         Populate the cache with the contents of `get_objects`. Useful to populate
         the cache in advance with items we know we will use.
         """
-        cache = cls.get_cache(db)
+        cache = cls._cache_from_session(db)
         for obj in get_objects():
             cls._cache_insert(obj, cache)
 
@@ -120,7 +120,7 @@ class HasSessionCache:
             return obj, new
 
     @classmethod
-    def get_cache(cls, _db: Session):
+    def _cache_from_session(cls, _db: Session):
         """Get cache from database session."""
 
         # https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session.info
@@ -136,7 +136,7 @@ class HasSessionCache:
     @classmethod
     def by_id(cls, db: Session, id: int) -> Optional[CacheableObject]:
         """Look up an item by its unique database ID."""
-        cache = cls.get_cache(db)
+        cache = cls._cache_from_session(db)
 
         def lookup_hook():
             return get_one(db, cls, id=id), False
@@ -149,5 +149,5 @@ class HasSessionCache:
         cls, db: Session, cache_key: Hashable, cache_miss_hook: Callable
     ) -> Tuple[Optional[CacheableObject], bool]:
         """Look up an item by its cache key."""
-        cache = cls.get_cache(db)
+        cache = cls._cache_from_session(db)
         return cls._cache_lookup(db, cache, "key", cache_key, cache_miss_hook)

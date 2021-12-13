@@ -44,7 +44,7 @@ class TestCollection(DatabaseTest):
         key = (name, protocol)
 
         # Cache is empty.
-        cache = Collection.get_cache(self._db)
+        cache = Collection._cache_from_session(self._db)
         assert len(cache.id) == 0
         assert len(cache.key) == 0
 

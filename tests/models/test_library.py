@@ -30,7 +30,7 @@ class TestLibrary(DatabaseTest):
         assert name == library.cache_key()
 
         # Cache is empty.
-        cache = Library.get_cache(self._db)
+        cache = Library._cache_from_session(self._db)
         assert len(cache.id) == 0
         assert len(cache.key) == 0
 
