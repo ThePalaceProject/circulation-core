@@ -3,7 +3,6 @@ import pytest
 from sqlalchemy.orm.exc import NoResultFound
 
 from ...model.datasource import DataSource
-from ...model.hasfulltablecache import HasFullTableCache
 from ...model.identifier import Identifier
 from ...testing import DatabaseTest
 

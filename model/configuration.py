@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from enum import Enum
 
 from flask_babel import lazy_gettext as _
-from sqlalchemy import Column, ForeignKey, Index, Integer, Unicode, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Index, Integer, Unicode
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session
@@ -19,11 +19,11 @@ from ..mirror import MirrorUploader
 from ..util.string_helpers import random_string
 from . import Base, get_one, get_one_or_create
 from .constants import DataSourceConstants
-from .hasfulltablecache import HasFullTableCache
+from .hassessioncache import HasSessionCache
 from .library import Library
 
 
-class ExternalIntegrationLink(Base, HasFullTableCache):
+class ExternalIntegrationLink(Base, HasSessionCache):
 
     __tablename__ = "externalintegrationslinks"
 
@@ -544,7 +544,7 @@ class ExternalIntegration(Base):
         return lines
 
 
-class ConfigurationSetting(Base, HasFullTableCache):
+class ConfigurationSetting(Base, HasSessionCache):
     """An extra piece of site configuration.
     A ConfigurationSetting may be associated with an
     ExternalIntegration, a Library, both, or neither.

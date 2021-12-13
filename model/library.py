@@ -12,7 +12,6 @@ from sqlalchemy import (
     Table,
     Unicode,
     UniqueConstraint,
-    func,
 )
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
@@ -23,14 +22,13 @@ from ..config import Configuration
 from ..entrypoint import EntryPoint
 from ..facets import FacetConstants
 from . import Base, get_one
-from .circulationevent import CirculationEvent
 from .edition import Edition
-from .hasfulltablecache import HasFullTableCache
+from .hassessioncache import HasSessionCache
 from .licensing import LicensePool
 from .work import Work
 
 
-class Library(Base, HasFullTableCache):
+class Library(Base, HasSessionCache):
     """A library that uses this circulation manager to authenticate
     its patrons and manage access to its content.
     A circulation manager may serve many libraries.

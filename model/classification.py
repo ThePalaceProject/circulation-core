@@ -12,7 +12,6 @@ from sqlalchemy import (
     Integer,
     Unicode,
     UniqueConstraint,
-    func,
 )
 from sqlalchemy.dialects.postgresql import INT4RANGE
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -31,7 +30,7 @@ from . import (
     tuple_to_numericrange,
 )
 from .constants import DataSourceConstants
-from .hasfulltablecache import HasFullTableCache
+from .hassessioncache import HasSessionCache
 
 
 class Subject(Base):
@@ -459,7 +458,7 @@ class Classification(Base):
         return False
 
 
-class Genre(Base, HasFullTableCache):
+class Genre(Base, HasSessionCache):
     """A subject-matter classification for a book.
     Much, much more general than Classification.
     """

@@ -2,7 +2,6 @@
 import pytest
 
 from ...model.configuration import ConfigurationSetting
-from ...model.hasfulltablecache import HasFullTableCache
 from ...model.library import Library
 from ...testing import DatabaseTest
 

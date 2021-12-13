@@ -23,7 +23,6 @@ from ...model.coverage import CoverageRecord, WorkCoverageRecord
 from ...model.customlist import CustomList
 from ...model.datasource import DataSource
 from ...model.edition import Edition
-from ...model.hasfulltablecache import HasFullTableCache
 from ...model.identifier import Identifier
 from ...model.licensing import Hold, License, LicensePool, Loan
 from ...model.work import Work

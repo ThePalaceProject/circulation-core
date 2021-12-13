@@ -1,5 +1,5 @@
 # encoding: utf-8
-# HasFullTableCache
+# HasSessionCache
 import logging
 import sys
 from collections import namedtuple
@@ -26,7 +26,7 @@ class CacheableObject(Protocol):
         ...
 
 
-class HasFullTableCache:
+class HasSessionCache:
     CacheTuple = namedtuple("CacheTuple", ["id", "key", "stats"])
     CACHE_ATTRIBUTE = "_palace_cache"
 

@@ -4,11 +4,11 @@ from unittest.mock import MagicMock, PropertyMock
 import pytest
 
 from ...model import ConfigurationSetting
-from ...model.hasfulltablecache import HasFullTableCache
+from ...model.hassessioncache import HasSessionCache
 from ...testing import DatabaseTest
 
 
-class TestHasFullTableCache:
+class TestHasSessionCache:
     @pytest.fixture()
     def mock_db(self):
         def mock():
@@ -29,7 +29,7 @@ class TestHasFullTableCache:
 
     @pytest.fixture()
     def mock_class(self):
-        return HasFullTableCache
+        return HasSessionCache
 
     def test_get_cache(self, mock_db, mock_class):
         mock_db1 = mock_db()

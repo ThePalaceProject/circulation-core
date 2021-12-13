@@ -9,10 +9,10 @@ from sqlalchemy.orm import relationship, validates
 from sqlalchemy.orm.session import Session
 
 from . import Base, get_one, get_one_or_create
-from .hasfulltablecache import HasFullTableCache
+from .hassessioncache import HasSessionCache
 
 
-class Admin(Base, HasFullTableCache):
+class Admin(Base, HasSessionCache):
 
     __tablename__ = "admins"
 
@@ -204,7 +204,7 @@ class Admin(Base, HasFullTableCache):
         return "<Admin: email=%s>" % self.email
 
 
-class AdminRole(Base, HasFullTableCache):
+class AdminRole(Base, HasSessionCache):
 
     __tablename__ = "adminroles"
 
