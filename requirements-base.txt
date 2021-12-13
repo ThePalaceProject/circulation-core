@@ -22,6 +22,8 @@ feedparser==6.0.2
 Flask==1.1.2
 Flask-Babel==1.0.0
 flask-sqlalchemy-session==1.1
+# freezegun is used for unit tests.
+freezegun<1.2
 funcsigs==1.0.2
 # fuzzywuzzy is for author name manipulations
 fuzzywuzzy==0.18.0
