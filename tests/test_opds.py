@@ -1,11 +1,9 @@
 import datetime
 import logging
-import re
 import xml.etree.ElementTree as ET
 from io import StringIO
 
 import feedparser
-import pytest
 from flask_babel import lazy_gettext as _
 from lxml import etree
 from psycopg2.extras import NumericRange
@@ -27,7 +25,6 @@ from ..entrypoint import (
 from ..external_search import MockExternalSearchIndex
 from ..facets import FacetConstants
 from ..lane import Facets, FeaturedFacets, Pagination, SearchFacets, WorkList
-from ..lcp.credential import LCPCredentialFactory
 from ..model import (
     CachedFeed,
     Contributor,
