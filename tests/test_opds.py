@@ -546,58 +546,6 @@ class TestOPDS(DatabaseTest):
         entry = parsed["entries"][0]
         assert work.presentation_edition.permanent_work_id == entry["simplified_pwid"]
 
-    @pytest.mark.parametrize(
-        "collection_protocol, drm_scheme, should_have_lcp_hashed_passphrase",
-        [
-            (ExternalIntegration.LCP, DeliveryMechanism.LCP_DRM, True),
-            (ExternalIntegration.ODL, DeliveryMechanism.LCP_DRM, True),
-            (ExternalIntegration.ODL, DeliveryMechanism.ADOBE_DRM, False),
-            (ExternalIntegration.ODL2, DeliveryMechanism.LCP_DRM, True),
-            (ExternalIntegration.ODL2, DeliveryMechanism.ADOBE_DRM, False),
-        ],
-    )
-    def test_lcp_acquisition_link_contains_hashed_passphrase(
-        self,
-        collection_protocol: str,
-        drm_scheme: str,
-        should_have_lcp_hashed_passphrase: bool,
-    ) -> None:
-        # Arrange
-        collection = self._collection(protocol=collection_protocol)
-        data_source = DataSource.lookup(self._db, DataSource.LCP, autocreate=True)
-        data_source_name = data_source.name
-        license_pool = self._licensepool(
-            edition=None, data_source_name=data_source_name, collection=collection
-        )
-        hashed_passphrase = "12345"
-        patron = self._patron()
-        lcp_credential_factory = LCPCredentialFactory()
-        loan, _ = license_pool.loan_to(patron)
-        rel = AcquisitionFeed.ACQUISITION_REL
-        href = self._url
-        types = [drm_scheme, Representation.EPUB_MEDIA_TYPE]
-        expected_result = (
-            f'<link href="{href}" rel="http://opds-spec.org/acquisition" '
-            f'type="{drm_scheme}">'
-        )
-
-        if should_have_lcp_hashed_passphrase:
-            expected_result += f'<ns0:hashed_passphrase xmlns:ns0="http://readium.org/lcp-specs/ns">{hashed_passphrase}</ns0:hashed_passphrase>'
-
-        expected_result += (
-            '<ns0:indirectAcquisition xmlns:ns0="http://opds-spec.org/2010/catalog" type="application/epub+zip"/>'
-            "</link>"
-        )
-
-        # Act
-        lcp_credential_factory.set_hashed_passphrase(
-            self._db, patron, hashed_passphrase
-        )
-        acquisition_link = AcquisitionFeed.acquisition_link(rel, href, types, loan)
-
-        # Assert
-        self._assert_xml_equal(acquisition_link, expected_result)
-
     def test_lane_feed_contains_facet_links(self):
         work = self._work(with_open_access_download=True)
 
