@@ -876,6 +876,7 @@ class OPDSImporter(object):
             contributions=True,
             rights=True,
             link_content=True,
+            formats=True,
             even_if_not_apparently_updated=True,
             mirrors=self.mirrors,
             content_modifier=self.content_modifier,
