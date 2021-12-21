@@ -1,3 +1,7 @@
+# ARCHIVED
+
+This repo has been merged into [circulation](https://github.com/ThePalaceProject/circulation) and removed as a submodule. All future development should be done in the circulation repo.
+
 # Library Simplified Server Core
 ![Build Status](https://github.com/nypl-simplified/server_core/actions/workflows/test.yml/badge.svg?branch=develop)
 
